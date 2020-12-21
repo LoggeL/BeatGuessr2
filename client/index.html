@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <p>Room</p>
+    <p id="currentID"></p>
+
+    <p>Player Name</p>
+    <input id="playerName" value="Logge">
+
+    <p>Audio</p>
+    <audio id="player" controls></audio>
+
+    <p>Ping</p>
+    <p id="ping-container"></p>
+
+    <p>Room Info</p>
+    <p id="roomInfo"></p>
+
+    <button id="createRoom">Create Room</button>
+
+    <button id="joinRoom">Join Room</button>
+    <input id="roomID" value="">
+
+    <script src="socket-io-client.js"></script>
+
+    <script>
+        const socket = io();
+        const audio = document.getElementById('player')
+        const currentID = document.getElementById('currentID')
+        const playerName = document.getElementById('playerName')
+        const pingContainer = document.getElementById('ping-container')
+        const createRoom = document.getElementById('createRoom')
+        const joinRoom = document.getElementById('joinRoom')
+        const roomID = document.getElementById('roomID')
+        const roomInfo = document.getElementById('roomInfo')
+        let pingInterval
+        let currentRoom = {}
+        socket.on('connect', () => {
+            console.log('connected', socket.id)
+
+            createRoom.addEventListener('click', () => {
+                socket.emit('createRoom', playerName.value)
+                createRoom.remove()
+            })
+
+            joinRoom.addEventListener('click', () => {
+                socket.emit('joinRoom', roomID.value, playerName.value)
+                joinRoom.remove()
+                socket.emit('statsRoom', roomID.value)
+            })
+
+            socket.on('createRoom', () => {
+                const name = playerName.value
+                if (!name) alert('Kein Name')
+                currentID.innerText = socket.id
+                currentRoom.id = socket.id
+
+                socket.emit('statsRoom', socket.id)
+            })
+
+            socket.on('statsRoom', data => {
+                currentRoom.data = data
+                roomInfo.innerText = JSON.stringify(currentRoom)
+            })
+
+            pingInterval = setInterval(() => {
+                socket.emit('ping', Date.now())
+            }, 2000)
+
+            socket.on('ping', latency => {
+                if ('Ping: ' + latency + ' ms' != pingContainer.innerText)
+                    pingContainer.innerText = 'Ping: ' + latency + ' ms'
+            })
+
+            // socket.emit('getSong', true)
+            socket.on('playerJoined', data => {
+                if (currentRoom.data) {
+                    currentRoom.data.push(data)
+                    // Update List
+                    roomInfo.innerText = JSON.stringify(currentRoom)
+                }
+            })
+
+            socket.on('playerLeft', playerID => {
+                if (currentRoom.data) {
+                    const index = currentRoom.data.findIndex(e => e.id == playerID)
+                    currentRoom.data.splice(index, 1);
+                    // Update List
+                    roomInfo.innerText = JSON.stringify(currentRoom)
+                }
+            })
+
+
+            socket.on('playSong', data => {
+                player.src = data.url
+                setTimeout(() => {
+                    //player.play()
+                }, data.start - Date.now())
+                console.log('Starts in', data.start - Date.now(), 'ms', data)
+            })
+        })
+
+        socket.on('disconnect', reason => {
+            console.log('disconnected', reason)
+            clearInterval(pingInterval)
+            socket.removeAllListeners();
+        })
+    </script>
+</body>
+
+</html>

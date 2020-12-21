@@ -1,0 +1,17 @@
+{
+  "name": "beatguessr2",
+  "version": "1.0.0",
+  "description": "Beat Guess Game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Logge",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
+    "socket.io": "^3.0.4",
+    "socket.io-stream": "^0.9.1"
+  }
+}
