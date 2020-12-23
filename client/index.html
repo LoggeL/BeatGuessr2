@@ -53,7 +53,7 @@
             joinRoom.addEventListener('click', () => {
                 socket.emit('joinRoom', roomID.value, playerName.value)
                 joinRoom.remove()
-                socket.emit('statsRoom', roomID.value)
+                socket.emit('statsRoom')
             })
 
             socket.on('createRoom', () => {
@@ -62,7 +62,7 @@
                 currentID.innerText = socket.id
                 currentRoom.id = socket.id
 
-                socket.emit('statsRoom', socket.id)
+                socket.emit('statsRoom')
             })
 
             socket.on('statsRoom', data => {

@@ -11,14 +11,19 @@ module.exports = io => {
         socket.on('ping', (timestamp) => timing.ping(socket, timestamp))
 
         socket.on('createRoom', (playerName) => room.createRoom(socket, playerName))
-        socket.on('joinRoom', (roomID, playerName) => room.joinRoom(socket, roomID, playerName))
-        socket.on('leaveRoom', (roomID) => room.leaveRoom(socket, roomID))
-        socket.on('statsRoom', (roomID) => room.statsRoom(socket, roomID))
+        socket.on('joinRoom', (playerName) => room.joinRoom(socket, playerName))
+        socket.on('leaveRoom', () => room.leaveRoom(socket))
+        socket.on('statsRoom', () => room.statsRoom(socket))
+
+        socket.on('startRoom', () => room.startRoom(socket))
+        socket.on('roomPauseSong', () => room.roomPauseSong(socket))
+        socket.on('roomPlaySong', () => room.roomPlaySong(socket))
+        socket.on('roomBuzzer', () => room.roomBuzzer(socket))
+
 
         socket.on('disconnect', () => {
-            const roomID = room.findRoom(socket)
-            if (roomID) room.leaveRoom(socket, roomID)
-            console.log('disconnect', socket.id, roomID)
+            room.leaveRoom(socket)
+            console.log('disconnect', socket.id)
         })
     })
 }
