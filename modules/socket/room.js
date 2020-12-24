@@ -1,4 +1,5 @@
 const music = require('./music.js')
+const scores = requie('./scores.js')
 
 let rooms = {}
 
@@ -12,7 +13,6 @@ const findRoom = (socket) => {
 }
 
 module.exports = {
-
     createRoom: (socket, playerName) => {
         console.log('createRoom', socket.id)
         const roomID = socket.id
@@ -22,11 +22,11 @@ module.exports = {
             players: [{ id: socket.id, score: 0, playerName }],
             started: false,
             song: {
+                category: null,
                 url: null,
                 artistGuessed: null,
                 titleGuessed: null,
-                category: null,
-                playing: null,
+                playing: false,
                 buzzer: null,
                 guesses: []
             },
@@ -93,8 +93,19 @@ module.exports = {
         if (!roomID) return '403'
         if (rooms[roomID].owner != socket.id) return '403' 
         if (rooms[roomID].song.playing) return '401'
-        const url = songs.getSong()
+        if (!rooms[roomID].song.category) return '401'
+        const url = songs.getSong(rooms[roomID].song.category)
         music.playSong(socket, roomID, url)
+
+        rooms[roomID].song = {
+            url,
+            artistGuessed: false,
+            titleGuessed: false,
+            category: rooms[roomID].song.category,
+            playing: true,
+            buzzer: null,
+            guesses: []
+        }
     },
 
     roomPauseSong: (socket) => {
@@ -111,25 +122,55 @@ module.exports = {
         if (!rooms[roomID].song.playing) return '401'
         if (rooms[roomID].guesses.includes(socket.id)) return '403'
         if (rooms[roomID].song.artistGuessed && rooms[roomID].song.titleGuessed) return '401'
+        rooms[roomID].song.buzzer = {
+            id: socket.id,
+            time: Date.now()
+        }
         music.pauseSong(socket, roomID)
     },
 
-    roomJudge: (socket, type, correct) => {
+    roomJudge: (socket, artist, title) => {
         const roomID = findRoom(socket)
         if (!roomID) return '403'
         if (rooms[roomID].owner != socket.id) return '403' 
 
-        if (correct) {
-            if (type == 'artist') {
-                rooms[roomID].artistGuessed = socket.id
-            } else if (type == 'title') {
-                rooms[roomID].titleGuessed = socket.id
-            } else {
-                return '401'
-            }
+        if (artist && !rooms[roomID].song.artistGuessed) {
+            rooms[roomID].song.artistGuessed = socket.id
+            socket.to(roomID).emit('artistCorrect', artist)
+            scores.scoresAdd(socket, playerID)
         }
-        else {
-            rooms[roomID].guesses.push(socket.id)
+        else if (!rooms[roomID].song.artistGuessed) {
+            socket.to(roomID).emit('artistWrong')
         }
+
+        if (title && !rooms[roomID].song.titleGuessed) {
+            rooms[roomID].song.titleGuessed = socket.id
+            socket.to(roomID).emit('titleCorrect', title)
+        }
+        else if (!rooms[roomID].song.titleGuessed) {
+            socket.to(roomID).emit('titleWrong')
+        }
+
+        rooms[roomID].song.guesses.push(socket.id)
+    },
+
+    roomGuess: (socket, interpret, title) => {
+        const roomID = findRoom(socket)
+        if (rooms[roomID].owner == socket.id) return '403' 
+        if (!interpret && !title) return '401'
+        if (rooms[roomID].song.playing) return '401'
+        if (rooms[roomID].song.guesses.includes(socket.id)) return '403'
+        if (!rooms[roomID].buzzer) return '403'
+        if (rooms[roomID].buzzer.time + 20000 < Date.now()) return '403'
+        socket.to(roomID).emit('roomGuess', {title, interpret})
+    },
+
+    setCategory: (socket, category) => {
+        const roomID = findRoom(socket)
+        if (rooms[roomID].owner == socket.id) return '403' 
+        const categories = music.getCategories()
+        if (!categories.includes(category)) return '404'
+        rooms[roomID].song.category = category
+        socket.to(roomID).emit('setCategory', category)
     }
 }
