@@ -1,10 +1,10 @@
 const music = require('./music.js')
-const scores = requie('./scores.js')
+const scores = require('./scores.js')
 
 let rooms = {}
 
 const findRoom = (socket) => {
-    console.log('findRoom', socket.id)
+    //console.log('findRoom', socket.id)
     for (roomID in rooms) {
         if (rooms[roomID].players.some(p => p.id == socket.id)) {
             return roomID
@@ -13,6 +13,7 @@ const findRoom = (socket) => {
 }
 
 module.exports = {
+
     createRoom: (socket, playerName) => {
         console.log('createRoom', socket.id)
         const roomID = socket.id
@@ -33,15 +34,11 @@ module.exports = {
         }
         socket.emit('createRoom', roomID)
     },
-
-    joinRoom: (socket, playerName) => {
-        const roomID = findRoom(socket)
-        if (!roomID) return '403'
-        console.log('joinRoom', socket.id)
-        console.log(rooms, roomID)
+    
+    joinRoom: (socket, roomID, playerName) => {
+        console.log('joinRoom', playerName, socket.id, 'to', roomID)
         if (!rooms[roomID]) return console.error('joinRoom', 'noRoom')
         rooms[roomID].players.push({ id: socket.id, score: 0, playerName })
-        console.log('joinRoom', roomID)
         socket.join(roomID)
         socket.to(roomID).emit('playerJoined', { id: socket.id, score: 0, playerName })
     },
@@ -60,7 +57,7 @@ module.exports = {
         else {
             // User leaves
             const index = rooms[roomID].players.findIndex(p => p.id == socket.id);
-            if (rooms > -1) {
+            if (index > -1) {
                 console.log('leaveRoom', roomID)
                 socket.to(roomID).emit('playerLeft', socket.id)
                 rooms[roomID].players.splice(index, 1);
@@ -137,7 +134,7 @@ module.exports = {
         if (artist && !rooms[roomID].song.artistGuessed) {
             rooms[roomID].song.artistGuessed = socket.id
             socket.to(roomID).emit('artistCorrect', artist)
-            scores.scoresAdd(socket, playerID)
+            scores.scoresAdd(socket, roomID, playerID)
         }
         else if (!rooms[roomID].song.artistGuessed) {
             socket.to(roomID).emit('artistWrong')
