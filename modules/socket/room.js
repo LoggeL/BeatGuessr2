@@ -28,6 +28,7 @@ module.exports = {
                 artistGuessed: null,
                 titleGuessed: null,
                 playing: false,
+                progress: 0,
                 buzzer: null,
                 guesses: []
             },
@@ -37,7 +38,7 @@ module.exports = {
     
     joinRoom: (socket, roomID, playerName) => {
         console.log('joinRoom', playerName, socket.id, 'to', roomID)
-        if (!rooms[roomID]) return console.error('joinRoom', 'noRoom')
+        if (!rooms[roomID]) return socket.emit('statsRoom', 404)
         rooms[roomID].players.push({ id: socket.id, score: 0, playerName })
         socket.join(roomID)
         socket.to(roomID).emit('playerJoined', { id: socket.id, score: 0, playerName })
@@ -94,6 +95,8 @@ module.exports = {
         const url = songs.getSong(rooms[roomID].song.category)
         music.playSong(socket, roomID, url)
 
+        if (!rooms[roomID].started) rooms[roomID].started = Date.now()
+
         rooms[roomID].song = {
             url,
             artistGuessed: false,
@@ -101,8 +104,17 @@ module.exports = {
             category: rooms[roomID].song.category,
             playing: true,
             buzzer: null,
+            progress: 0,
             guesses: []
         }
+    },
+
+    roomResumeSong: (socket, progress) => {
+        const roomID = findRoom(socket)
+        if (!roomID) return '403'
+        if (rooms[roomID].owner != socket.id) return '403' 
+        if (rooms[roomID].playing) return '401'
+        music.playSong(socket, roomID, rooms[roomID].song.url, progress)
     },
 
     roomPauseSong: (socket) => {
@@ -110,6 +122,7 @@ module.exports = {
         if (!roomID) return '403'
         if (rooms[roomID].owner != socket.id) return '403' 
         if (!rooms[roomID].song.playing) return '401'
+        rooms[roomID].song.playing = false
         music.pauseSong(socket, roomID)
     },
 
@@ -123,6 +136,7 @@ module.exports = {
             id: socket.id,
             time: Date.now()
         }
+        rooms[roomID].song.playing = false
         music.pauseSong(socket, roomID)
     },
 

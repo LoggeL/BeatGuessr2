@@ -8,27 +8,59 @@
 </head>
 
 <body>
-    <p>Room</p>
-    <p id="currentID"></p>
+    <div>
+        <p>Room</p>
+        <p id="currentID"></p>
+    </div>
 
-    <p>Player Name</p>
-    <input id="playerName" value="Logge">
+    <div>
+        <p>Player Name</p>
+        <input id="playerName" value="Logge">
+    </div>
+        
+        <div>
+        <p>Audio</p>
+        <audio id="player" controls></audio>
+    </div>
+        
+    <div>
+        <p>Ping</p>
+        <p id="pingContainer"></p>
+    </div>
+        
+    <div>
+        <button id="createRoom">Create Room</button>
+        <button id="joinRoom">Join Room</button>
+        <input id="roomID" value="">
+    </div>
+        
+    <div>
+        <p>PreGameRoom</p>
+        <p id="preGameRoom"></p>
+    </div>
+        
+    <div>
+        <p>Scoreboard</p>
+        <p id="scoreoard"></p>
+    </div>
 
-    <p>Audio</p>
-    <audio id="player" controls></audio>
+    <div id="adminControls" style="display:none">
+        <p>Categories</p>
+        <p id="categories"></p>
+        <p>Current Categories</p>
+        <p id="currentCategories"></p>
+        <p>Title guess</p>
+        <p id="titleGuess"></p>
+        <button id="correctTitle">Correct</button>
+        <button id="wrongTitle">Wrong</button>
+        <br />
+        
+        <p>Artist guess</p>
+        <p id="artistGuess"></p>
+        <button id="correctArtist">Correct</button>
+        <button id="wrongArtist">Wrong</button>
+    </div>
 
-    <p>Ping</p>
-    <p id="ping-container"></p>
-
-    <button id="createRoom">Create Room</button>
-    <button id="joinRoom">Join Room</button>
-    <input id="roomID" value="">
-
-    <p>PreGameRoom</p>
-    <p id="preGameRoom"></p>
-
-    <p>Scoreboard</p>
-    <p id="scoreoard"></p>
     <script src="socket-io-client.js"></script>
     <script src="client.js"></script>
 </body>

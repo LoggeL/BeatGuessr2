@@ -2,10 +2,11 @@ const songs = require('./songs.js')
 const timing = require('./timing.js')
 
 module.exports = {
-    playSong: (socket, roomID, url) => {
+    playSong: (socket, roomID, url, progress) => {
         socket.to(roomID).emit('playSong', {
             url: url,
             start: Date.now() + timing.getMaxPing() + 500,
+            progress: 0
         })
     },
 
@@ -14,6 +15,6 @@ module.exports = {
     },
 
     getCategories: (socket, roomID) => {
-        socket.to(roomID).emit('getCategories', songs.getCategories())
+        socket.emit('getCategories', songs.getCategories())
     }
 }

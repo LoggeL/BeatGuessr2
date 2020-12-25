@@ -19,6 +19,7 @@ module.exports = io => {
         socket.on('roomPauseSong', () => room.roomPauseSong(socket))
         socket.on('roomPlaySong', () => room.roomPlaySong(socket))
         socket.on('roomBuzzer', () => room.roomBuzzer(socket))
+        socket.on('roomResumeSong', (progress) => room.roomResumeSong(socket, progress))
 
 
         socket.on('disconnect', () => {

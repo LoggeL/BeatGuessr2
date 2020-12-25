@@ -2,11 +2,14 @@ const socket = io();
 const audio = document.getElementById('player')
 const currentID = document.getElementById('currentID')
 const playerName = document.getElementById('playerName')
-const pingContainer = document.getElementById('ping-container')
+const pingContainer = document.getElementById('pingContainer')
 const createRoom = document.getElementById('createRoom')
 const joinRoom = document.getElementById('joinRoom')
 const roomID = document.getElementById('roomID')
 const preGameRoom = document.getElementById('preGameRoom')
+const adminControls = document.getElementById('adminControls')
+const categories = document.getElementById('categories')
+const currentCategories = document.getElementById('currentCategories')
 let pingInterval, isOwner
 let currentRoom = {}
 socket.on('connect', () => {
@@ -16,28 +19,40 @@ socket.on('connect', () => {
         const name = playerName.value
         if (!name) return alert('Kein Name')
         socket.emit('createRoom', playerName.value)
-        createRoom.remove()
+        createRoom.parentNode.remove()
     })
 
-  joinRoom.addEventListener('click', () => {
+    joinRoom.addEventListener('click', () => {
         const name = playerName.value
         if (!name) return alert('Kein Name')
         socket.emit('joinRoom', roomID.value, playerName.value)
-        joinRoom.remove()
+        joinRoom.parentNode.style.display = 'none'
         socket.emit('statsRoom')
     })
 
     socket.on('createRoom', () => {
-
         currentID.innerText = socket.id
         currentRoom.id = socket.id
-
+        adminControls.style.display = 'block'
+        isOwner = true
+        socket.emit('getCategories')
         socket.emit('statsRoom')
     })
 
+    socket.on('getCategories', categoryData => {
+        for (let i = 0; i < categoryData.length; i++) {
+
+        }
+    })
+
     socket.on('statsRoom', data => {
-      currentRoom.players = data.players
-      preGameRoom.innerText = data.players.map(p => p.id + ' - ' + p.playerName).join('\n')
+        if (data == '404') {
+            console.error('NoRoom')
+            return joinRoom.parentNode.style.display = 'block'
+        }
+
+        currentRoom.players = data.players
+        preGameRoom.innerText = data.players.map(p => p.id + ' - ' + p.playerName).join('\n')
     })
 
     pingInterval = setInterval(() => {
@@ -59,7 +74,7 @@ socket.on('connect', () => {
     })
 
     socket.on('playerLeft', playerID => {
-      console.log('playerLeft', playerID)
+        console.log('playerLeft', playerID)
         if (currentRoom.players) {
             const index = currentRoom.players.findIndex(e => e.id == playerID)
             currentRoom.players.splice(index, 1);
@@ -76,7 +91,7 @@ socket.on('connect', () => {
         }, data.start - Date.now())
         console.log('Starts in', data.start - Date.now(), 'ms', data)
     })
-  
+
     socket.on('destroyRoom', () => {
         alert('Host left room')
         window.location.reload(true)
@@ -87,4 +102,12 @@ socket.on('disconnect', reason => {
     console.log('disconnected', reason)
     clearInterval(pingInterval)
     socket.removeAllListeners();
+    setTimeout(() => {
+        window.location.reload(true)
+    }, 5000)
 })
+
+function setCategory() {
+    if (!isOwner) return
+    socket.emit()
+}
