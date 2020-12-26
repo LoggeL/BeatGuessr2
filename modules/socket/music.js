@@ -3,11 +3,14 @@ const timing = require('./timing.js')
 
 module.exports = {
     playSong: (socket, roomID, url, progress) => {
-        socket.to(roomID).emit('playSong', {
+        console.log('playSong', socket.id)
+        const data = {
             url: url,
             start: Date.now() + timing.getMaxPing() + 500,
-            progress: 0
-        })
+            progress: progress || 0
+        }
+        socket.to(roomID).emit('playSong', data)
+        socket.emit('playSong', data)
     },
 
     pauseSong: (socket, roomID) => {

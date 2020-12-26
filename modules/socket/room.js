@@ -90,6 +90,7 @@ module.exports = {
     },
 
     roomPlaySong: (socket) => {
+        console.log('roomPlaySong', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403'
         if (rooms[roomID].owner != socket.id) return '403' 
@@ -174,6 +175,8 @@ module.exports = {
         }
 
         rooms[roomID].song.guesses.push(socket.id)
+        if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length)
+            this.resolveSong(socket, true)
     },
 
     roomGuess: (socket, interpret, title) => {
@@ -207,5 +210,12 @@ module.exports = {
         const metaData = songs.getMeta()
         socket.emit('resolveSong', metaData)
         if (all) socket.to(roomID).emit('resolveSong', metaData)
+    },
+
+    scoresGet: (socket) => {
+        console.log('scoresGet', socket.id)
+        const roomID = findRoom(socket)
+        if (rooms[roomID]) return '404' 
+        scores.scoresGet(socket, roomID)
     }
 }

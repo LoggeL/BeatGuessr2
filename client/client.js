@@ -12,7 +12,7 @@ const currentCategory = document.getElementById('currentCategory')
 const startGame = document.getElementById('startGame')
 const resolveSong = document.getElementById('resolveSong')
 
-let pingInterval, isOwner
+let pingInterval, isOwner, category
 let currentRoom = {}
 
 const socket = io()
@@ -36,7 +36,13 @@ socket.on('connect', () => {
     })
 
     startGame.addEventListener('click', () => {
-        startGame.remove()
+        if (category) {
+            socket.emit('roomPlaySong')
+            startGame.remove()
+        }
+        else {
+            alert('Category not set')
+        }
     })
 
     socket.on('createRoom', () => {
@@ -99,7 +105,7 @@ socket.on('connect', () => {
     socket.on('playSong', data => {
         player.src = data.url
         setTimeout(() => {
-           //player.play()   
+           player.play()   
         }, data.start - Date.now())
         console.log('Starts in', data.start - Date.now(), 'ms', data)
     })
@@ -109,9 +115,10 @@ socket.on('connect', () => {
         window.reload(true)
     })
 
-    socket.on('setCategory', category => {
-        console.log('ownerSetCategory', category)
-        currentCategory.innerText = category
+    socket.on('setCategory', setCategory => {
+        console.log('ownerSetCategory', setCategory)
+        category = setCategory
+        currentCategory.innerText = setCategory
     })
 
     socket.on('resolveSong', metaData => {
