@@ -1,4 +1,3 @@
-const socket = io();
 const audio = document.getElementById('player')
 const currentID = document.getElementById('currentID')
 const playerName = document.getElementById('playerName')
@@ -11,8 +10,13 @@ const adminControls = document.getElementById('adminControls')
 const categories = document.getElementById('categories')
 const currentCategory = document.getElementById('currentCategory')
 const startGame = document.getElementById('startGame')
+const resolveSong = document.getElementById('resolveSong')
+
 let pingInterval, isOwner
 let currentRoom = {}
+
+const socket = io()
+
 socket.on('connect', () => {
     console.log('connected', socket.id)
 
@@ -102,12 +106,16 @@ socket.on('connect', () => {
 
     socket.on('destroyRoom', () => {
         alert('Host left room')
-        window.location.reload(true)
+        window.reload(true)
     })
 
     socket.on('setCategory', category => {
         console.log('ownerSetCategory', category)
         currentCategory.innerText = category
+    })
+
+    socket.on('resolveSong', metaData => {
+        resolveSong.innerText = metaData.title + ' - ' + metaData.artist
     })
 })
 
@@ -116,7 +124,7 @@ socket.on('disconnect', reason => {
     clearInterval(pingInterval)
     socket.removeAllListeners();
     setTimeout(() => {
-        window.location.reload(true)
+        window.reload(true)
     }, 5000)
 })
 

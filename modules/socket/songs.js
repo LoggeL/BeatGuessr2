@@ -5,5 +5,11 @@ module.exports = {
 
     getCategories: () => {
         return ['Duck', 'Foo', 'Bar']
+    },
+
+    getMeta: () => {
+        const title = 'title'
+        const artist = 'artist'
+        return {title, artist}
     }
 }

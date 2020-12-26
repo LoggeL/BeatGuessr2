@@ -198,5 +198,14 @@ module.exports = {
         rooms[roomID].song.category = category
         socket.to(roomID).emit('setCategory', category)
         socket.emit('setCategory', category)
+    },
+
+    resolveSong: (socket, all) => {
+        console.log('setCategory', socket.id)
+        const roomID = findRoom(socket)
+        if (rooms[roomID].owner != socket.id) return '403' 
+        const metaData = songs.getMeta()
+        socket.emit('resolveSong', metaData)
+        if (all) socket.to(roomID).emit('resolveSong', metaData)
     }
 }
