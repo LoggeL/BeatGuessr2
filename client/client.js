@@ -9,7 +9,8 @@ const roomID = document.getElementById('roomID')
 const preGameRoom = document.getElementById('preGameRoom')
 const adminControls = document.getElementById('adminControls')
 const categories = document.getElementById('categories')
-const currentCategories = document.getElementById('currentCategories')
+const currentCategory = document.getElementById('currentCategory')
+const startGame = document.getElementById('startGame')
 let pingInterval, isOwner
 let currentRoom = {}
 socket.on('connect', () => {
@@ -30,6 +31,10 @@ socket.on('connect', () => {
         socket.emit('statsRoom')
     })
 
+    startGame.addEventListener('click', () => {
+        startGame.remove()
+    })
+
     socket.on('createRoom', () => {
         currentID.innerText = socket.id
         currentRoom.id = socket.id
@@ -41,7 +46,10 @@ socket.on('connect', () => {
 
     socket.on('getCategories', categoryData => {
         for (let i = 0; i < categoryData.length; i++) {
-
+            const button = document.createElement('button')
+            button.innerText = categoryData[i]
+            button.onclick = () => setCategory(button.innerText)
+            categories.append(button)
         }
     })
 
@@ -96,6 +104,11 @@ socket.on('connect', () => {
         alert('Host left room')
         window.location.reload(true)
     })
+
+    socket.on('setCategory', category => {
+        console.log('ownerSetCategory', category)
+        currentCategory.innerText = category
+    })
 })
 
 socket.on('disconnect', reason => {
@@ -107,7 +120,8 @@ socket.on('disconnect', reason => {
     }, 5000)
 })
 
-function setCategory() {
+function setCategory(value) {
     if (!isOwner) return
-    socket.emit()
+    console.log('setCategory', value)
+    socket.emit('setCategory', value)
 }

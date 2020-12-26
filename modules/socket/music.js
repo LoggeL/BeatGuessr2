@@ -14,7 +14,8 @@ module.exports = {
         socket.to(roomID).emit('pauseSong')
     },
 
-    getCategories: (socket, roomID) => {
-        socket.emit('getCategories', songs.getCategories())
+    getCategories: (socket) => {
+        console.log('getCategories', socket.id)
+        socket.emit('getCategories', songs.getCategories(socket))
     }
 }

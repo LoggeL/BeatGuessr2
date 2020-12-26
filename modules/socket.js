@@ -10,10 +10,13 @@ module.exports = io => {
 
         socket.on('ping', (timestamp) => timing.ping(socket, timestamp))
 
+        socket.on('getCategories', () => music.getCategories(socket))
+
         socket.on('createRoom', (playerName) => room.createRoom(socket, playerName))
         socket.on('joinRoom', (roomID, playerName) => room.joinRoom(socket, roomID, playerName))
         socket.on('leaveRoom', () => room.leaveRoom(socket))
         socket.on('statsRoom', () => room.statsRoom(socket))
+        socket.on('setCategory', (category) => room.setCategory(socket, category))
 
         socket.on('startRoom', () => room.startRoom(socket))
         socket.on('roomPauseSong', () => room.roomPauseSong(socket))
