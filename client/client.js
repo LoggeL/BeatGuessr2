@@ -7,13 +7,22 @@ const createRoom = document.getElementById('createRoom')
 const joinRoom = document.getElementById('joinRoom')
 const roomID = document.getElementById('roomID')
 const gameRoom = document.getElementById('gameRoom')
-const adminControls = document.getElementById('adminControls')
-const categories = document.getElementById('categories')
 const currentCategory = document.getElementById('currentCategory')
-const startGame = document.getElementById('startGame')
-const resolveTitle = document.getElementById('resolveTitle')
-const resolveArtist = document.getElementById('resolveArtist')
+const guessedTitle = document.getElementById('guessedTitle')
+const guessedArtist = document.getElementById('guessedArtist')
 const socketID = document.getElementById('socketID')
+
+// Owner only
+const startGame = document.getElementById('startGame')
+const categories = document.getElementById('categories')
+const adminControls = document.getElementById('adminControls')
+const titleGuessAdmin = document.getElementById('titleGuessAdmin')
+const artistGuessAdmin = document.getElementById('artistGuessAdmin')
+
+const artistCorrect = document.getElementById('artistCorrect')
+const artistWrong = document.getElementById('artistWrong')
+const titleCorrect = document.getElementById('titleCorrect')
+const titleWrong = document.getElementById('titleWrong')
 
 // Buzzer Realted
 const buzzer = document.getElementById('buzzer')
@@ -25,7 +34,7 @@ const artistGuess = document.getElementById('artistGuess')
 const submitGuess = document.getElementById('submitGuess')
 
 
-let pingInterval, isOwner, category
+let pingInterval, isOwner, category, judgeGuessData
 let currentRoom = {}
 
 const socket = io()
@@ -40,6 +49,7 @@ socket.on('connect', () => {
         if (!name) return alert('Kein Name')
         socket.emit('createRoom', playerName.value.trim())
         createRoom.parentNode.remove()
+        buzzer.parentElement.style.display = 'none'
     })
 
     joinRoom.addEventListener('click', () => {
@@ -68,7 +78,7 @@ socket.on('connect', () => {
         const artist = artistGuess.disabled ? null : artistGuess.value.trim()
         const title = titleGuess.disabled ? null : titleGuess.value.trim()
 
-        socket.emit('roomGuess', title, artist)
+        socket.emit('roomGuess', { title, artist })
     })
 
     socket.on('artistCorrect', artist => {
@@ -91,11 +101,19 @@ socket.on('connect', () => {
         }
     })
 
-    if (isOwner) {
-        socket.on('roomGuess', data => {
-            socket.emit('roomJudge', data)
-        })
-    }
+    socket.on('roomGuess', (data) => {
+        buzzerPopup.style.display = 'none'
+
+        titleGuessAdmin.innerText = data.guessedData.title + ' | ' + data.correctData.title
+        artistGuessAdmin.innerText = data.guessedData.artist + ' | ' + data.correctData.artist
+        judgeGuessedData = {}
+
+        titleCorrect.addEventListener('click', judgeGuess)
+        titleWrong.addEventListener('click', judgeGuess)
+
+        artistCorrect.addEventListener('click', judgeGuess)
+        artistWrong.addEventListener('click', judgeGuess)
+    })
 
     socket.on('createRoom', () => {
         currentRoomID.innerText = socket.id
@@ -161,19 +179,18 @@ socket.on('connect', () => {
             artistGuess.removeAttribute('disabled')
             titleGuess.value = ''
             titleGuess.removeAttribute('disabled')
-            resolveTitle.innerText = ''
-            resolveTitle.style.color = 'black'
-            resolveArtist.innerText = ''
-            resolveArtist.style.color = 'black'
+            guessedTitle.innerText = ''
+            guessedTitle.style.color = 'black'
+            guessedArtist.innerText = ''
+            guessedArtist.style.color = 'black'
         }
         player.src = data.url
         setTimeout(() => {
-            console.log(player.duration * data.progress, player.duration, data.progress)
+            buzzer.removeAttribute('disabled')
             player.currentTime = player.duration * data.progress
             player.play()
         }, data.start - Date.now())
         console.log('Starts in', data.start - Date.now(), 'ms', data)
-        buzzer.removeAttribute('disabled')
     })
 
     socket.on('destroyRoom', () => {
@@ -188,28 +205,31 @@ socket.on('connect', () => {
     })
 
     socket.on('resolveSong', metaData => {
-        resolveTitle.innerText = metaData.title
-        resolveArtist.innerText = metaData.artist
+        guessedTitle.innerText = metaData.title
+        guessedArtist.innerText = metaData.artist
+        setTimeout(() => {
+            socket.emit('roomPlaySong')
+        }, 5000)
     })
 
     socket.on('artistCorrect', artist => {
-        resolveArtist.innerText = artist
-        resolveArtist.style.color = 'green'
+        guessedArtist.innerText = artist
+        guessedArtist.style.color = 'green'
     })
 
     socket.on('titleCorrect', title => {
-        resolveTitle.innerText = title
-        resolveTitle.style.color = 'green'
+        guessedTitle.innerText = title
+        guessedTitle.style.color = 'green'
     })
 
     socket.on('artistWrong', wrongArtist => {
-        resolveArtist.innerText = wrongArtist
-        resolveArtist.style.color = 'red'
+        guessedArtist.innerText = wrongArtist
+        guessedArtist.style.color = 'red'
     })
 
     socket.on('titleWrong', wrongTitle => {
-        resolveTitle.innerText = wrongTitle
-        resolveTitle.style.color = 'red'
+        guessedTitle.innerText = wrongTitle
+        guessedTitle.style.color = 'red'
     })
 })
 
@@ -226,4 +246,16 @@ function setCategory(value) {
     if (!isOwner) return
     console.log('setCategory', value)
     socket.emit('setCategory', value)
+}
+
+function judgeGuess(element) {
+    const name = element.target.id
+    console.log(name)
+    const type = name.startsWith('artist') ? 'artist' : 'title'
+    const correct = name.endsWith('Correct')
+    judgeGuessedData[type] = correct
+    document.getElementById(`${type}Wrong`).removeEventListener('click', judgeGuess)
+    document.getElementById(`${type}Correct`).removeEventListener('click', judgeGuess)
+    if (Object.values(judgeGuessedData).length == 2)
+        return socket.emit('judgeGuess', judgeGuessedData)
 }

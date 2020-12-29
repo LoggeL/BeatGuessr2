@@ -1,7 +1,6 @@
 const timing = require('./socket/timing.js')
 const music = require('./socket/music.js')
 const room = require('./socket/room.js')
-const scores = require('./socket/scores.js')
 
 module.exports = io => {
     io.on('connection', socket => {
@@ -21,10 +20,11 @@ module.exports = io => {
         socket.on('roomPauseSong', () => room.roomPauseSong(socket))
         socket.on('roomPlaySong', () => room.roomPlaySong(socket))
         socket.on('roomBuzzer', () => room.roomBuzzer(socket))
-        socket.on('roomGuess', (data) => room.roomGuess(socket, data))
+        socket.on('roomGuess', (data) => room.roomGuess(socket, data, io))
         socket.on('roomJudge', (data) => room.roomJudge(socket, data))
         socket.on('roomResumeSong', (progress) => room.roomResumeSong(socket, progress))
         socket.on('resolveSong', (all) => room.resolveSong(socket, all))
+        socket.on('judgeGuess', (data) => room.roomJudge(socket, data))
 
         socket.on('scoresGet', () => room.scoresGet(socket))
 
