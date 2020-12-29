@@ -7,8 +7,6 @@ module.exports = io => {
     io.on('connection', socket => {
         console.log('connected', socket.id)
 
-        music.playSong(socket)
-
         socket.on('ping', (timestamp) => timing.ping(socket, timestamp))
 
         socket.on('getCategories', () => music.getCategories(socket))
@@ -23,6 +21,8 @@ module.exports = io => {
         socket.on('roomPauseSong', () => room.roomPauseSong(socket))
         socket.on('roomPlaySong', () => room.roomPlaySong(socket))
         socket.on('roomBuzzer', () => room.roomBuzzer(socket))
+        socket.on('roomGuess', (data) => room.roomGuess(socket, data))
+        socket.on('roomJudge', (data) => room.roomJudge(socket, data))
         socket.on('roomResumeSong', (progress) => room.roomResumeSong(socket, progress))
         socket.on('resolveSong', (all) => room.resolveSong(socket, all))
 
