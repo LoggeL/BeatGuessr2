@@ -216,7 +216,7 @@ module.exports = {
         console.log('resolveSong', socket.id)
         const roomID = findRoom(socket)
         if (rooms[roomID].owner != socket.id) return '403'
-        songs.getMeta(rooms[roomID].songs.url).then(metaData => {
+        songs.getMeta(rooms[roomID].song.url).then(metaData => {
             socket.emit('resolveSong', metaData.tags)
             if (all) socket.to(roomID).emit('resolveSong', metaData.tags)
         })
