@@ -197,8 +197,9 @@ module.exports = {
         if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
         if (!rooms[roomID].song.buzzer) return '403 - Buzzer not set'
         if (rooms[roomID].song.buzzer.time + 20000 < Date.now()) return '403 - Took too long'
-        const correctData = songs.getMeta(rooms[roomID].song.url)
-        io.to(roomID).emit('roomGuess', { guessedData: { title, artist }, correctData })
+        songs.getMeta(rooms[roomID].song.url).then(correctData => {
+            io.to(roomID).emit('roomGuess', { guessedData: { title, artist }, correctData })
+        })
     },
 
     setCategory: (socket, category) => {

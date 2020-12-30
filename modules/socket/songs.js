@@ -19,8 +19,5 @@ module.exports = {
                     reject(error)
                 }
             });
-            // const title = 'title'
-            // const artist = 'artist'
-            // return { title, artist }
         })
 }
