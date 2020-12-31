@@ -182,7 +182,7 @@ module.exports = {
         }
 
         rooms[roomID].song.guesses.push(socket.id)
-        if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length) {
+        if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length || (rooms[roomID].song.titleGuessed && rooms[roomID].song.artistGuessed)) {
             module.exports.resolveSong(socket, true)
         }
     },
@@ -198,7 +198,7 @@ module.exports = {
         if (!rooms[roomID].song.buzzer) return '403 - Buzzer not set'
         if (rooms[roomID].song.buzzer.time + 20000 < Date.now()) return '403 - Took too long'
         songs.getMeta(rooms[roomID].song.url).then(correctData => {
-            io.to(roomID).emit('roomGuess', { guessedData: { title, artist }, correctData })
+            io.to(roomID).emit('roomGuess', { guessedData: { title, artist }, correctData: correctData.tags })
         })
     },
 

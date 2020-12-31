@@ -34,7 +34,7 @@ const artistGuess = document.getElementById('artistGuess')
 const submitGuess = document.getElementById('submitGuess')
 
 
-let pingInterval, isOwner, category, judgeGuessData
+let pingInterval, isOwner, category, judgeGuessData, nameMapper
 let currentRoom = {}
 
 const socket = io()
@@ -96,13 +96,15 @@ socket.on('connect', () => {
         }
         else {
             buzzerWait.style.display = 'block'
-            buzzerWait.innerText = 'Buzzered by ' + buzzerPlayerId
+            buzzerWait.innerText = 'Buzzered by ' + nameMapper[buzzerPlayerId]
             buzzerForm.style.display = 'none'
         }
     })
 
     socket.on('roomGuess', (data) => {
         buzzerPopup.style.display = 'none'
+
+        console.log(data)
 
         titleGuessAdmin.innerText = data.guessedData.title + ' | ' + data.correctData.title
         artistGuessAdmin.innerText = data.guessedData.artist + ' | ' + data.correctData.artist
@@ -143,6 +145,7 @@ socket.on('connect', () => {
         currentRoomID.innerText = data.owner
         currentRoom.players = data.players
         gameRoom.innerText = data.players.map(p => p.id + ' - ' + p.playerName).join('\n')
+        data.players.forEach(p => nameMapper[p.id] = p.playerName)
     })
 
     pingInterval = setInterval(() => {
@@ -155,10 +158,11 @@ socket.on('connect', () => {
     })
 
     // socket.emit('getSong', true)
-    socket.on('playerJoined', data => {
+    socket.on('playerJoined', player => {
         if (currentRoom.players) {
-            currentRoom.players.push(data)
+            currentRoom.players.push(player)
             // Update List
+            nameMapper[player.id] = player.playerName
             gameRoom.innerText = currentRoom.players.map(p => p.id + ' - ' + p.playerName).join('\n')
         }
     })
@@ -168,6 +172,8 @@ socket.on('connect', () => {
         if (currentRoom.players) {
             const index = currentRoom.players.findIndex(e => e.id == playerID)
             currentRoom.players.splice(index, 1);
+            delete nameMapper[playerID]
+
             // Update List
             gameRoom.innerText = currentRoom.players.map(p => p.id + ' - ' + p.playerName).join('\n')
         }
