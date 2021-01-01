@@ -34,8 +34,9 @@ const artistGuess = document.getElementById('artistGuess')
 const submitGuess = document.getElementById('submitGuess')
 
 
-let pingInterval, isOwner, category, judgeGuessData, nameMapper
+let pingInterval, isOwner, category, judgeGuessData, hasGuessed
 let currentRoom = {}
+let nameMapper = {}
 
 const socket = io()
 
@@ -57,7 +58,6 @@ socket.on('connect', () => {
         if (!name) return alert('Kein Name')
         socket.emit('joinRoom', roomID.value.trim(), playerName.value.trim())
         joinRoom.parentNode.style.display = 'none'
-        socket.emit('statsRoom')
     })
 
     startGame.addEventListener('click', () => {
@@ -93,6 +93,7 @@ socket.on('connect', () => {
         if (socket.id == buzzerPlayerId) {
             buzzerForm.style.display = 'block'
             buzzerWait.style.display = 'none'
+            hasGuessed = true
         }
         else {
             buzzerWait.style.display = 'block'
@@ -122,8 +123,8 @@ socket.on('connect', () => {
         currentRoom.id = socket.id
         adminControls.style.display = 'block'
         isOwner = true
-        socket.emit('getCategories')
-        socket.emit('statsRoom')
+        currentRoom.players = [{ id: socket.id, playerName: playerName.value }]
+        renderPlayerlist()
     })
 
     socket.on('getCategories', categoryData => {
@@ -144,7 +145,7 @@ socket.on('connect', () => {
 
         currentRoomID.innerText = data.owner
         currentRoom.players = data.players
-        gameRoom.innerText = data.players.map(p => p.id + ' - ' + p.playerName).join('\n')
+        renderPlayerlist()
         data.players.forEach(p => nameMapper[p.id] = p.playerName)
     })
 
@@ -159,11 +160,12 @@ socket.on('connect', () => {
 
     // socket.emit('getSong', true)
     socket.on('playerJoined', player => {
+        console.log(player)
         if (currentRoom.players) {
             currentRoom.players.push(player)
             // Update List
             nameMapper[player.id] = player.playerName
-            gameRoom.innerText = currentRoom.players.map(p => p.id + ' - ' + p.playerName).join('\n')
+            renderPlayerlist()
         }
     })
 
@@ -175,7 +177,7 @@ socket.on('connect', () => {
             delete nameMapper[playerID]
 
             // Update List
-            gameRoom.innerText = currentRoom.players.map(p => p.id + ' - ' + p.playerName).join('\n')
+            renderPlayerlist()
         }
     })
 
@@ -189,14 +191,15 @@ socket.on('connect', () => {
             guessedTitle.style.color = 'black'
             guessedArtist.innerText = ''
             guessedArtist.style.color = 'black'
+            hasGuessed = false
         }
         player.src = data.url
         setTimeout(() => {
-            buzzer.removeAttribute('disabled')
+            if (data.progress == 0 || !hasGuessed) buzzer.removeAttribute('disabled')
             player.currentTime = player.duration * data.progress
             player.play()
         }, data.start - Date.now())
-        console.log('Starts in', data.start - Date.now(), 'ms', data)
+        console.log('Starts in', data.start - Date.now(), 'ms', data, 'at', data.progress * 100, '%')
     })
 
     socket.on('destroyRoom', () => {
@@ -262,6 +265,13 @@ function judgeGuess(element) {
     judgeGuessedData[type] = correct
     document.getElementById(`${type}Wrong`).removeEventListener('click', judgeGuess)
     document.getElementById(`${type}Correct`).removeEventListener('click', judgeGuess)
-    if (Object.values(judgeGuessedData).length == 2)
+    if (Object.values(judgeGuessedData).length == 2) {
+        judgeGuessedData.progress = player.currentTime / player.duration
         return socket.emit('judgeGuess', judgeGuessedData)
+    }
+}
+
+function renderPlayerlist() {
+    console.log('rendering', currentRoom.players.length, 'players')
+    gameRoom.innerText = currentRoom.players.map(p => p.id + ' - ' + p.playerName).join('\n')
 }

@@ -1,16 +1,16 @@
 const music = require('./music.js')
 const scores = require('./scores.js')
 const songs = require('./songs.js')
+const timing = require('./timing.js')
 
 let rooms = {}
 
 const findRoom = (socket) => {
-    //console.log('findRoom', socket.id)
-    for (roomID in rooms) {
-        if (rooms[roomID].players.some(p => p.id == socket.id)) {
-            return roomID
-        }
+    if (socket.rooms.size == 0) return
+    for (let roomID of socket.rooms) {
+        if (roomID !== socket.id || socket.rooms.size == 1) return roomID
     }
+    console.error('No room for', socket.id, socket.rooms)
 }
 
 module.exports = {
@@ -20,7 +20,7 @@ module.exports = {
         if (rooms[roomID] !== undefined) return console.error('createRoom', 'roomExists')
         rooms[roomID] = {
             owner: socket.id,
-            players: [{ id: socket.id, score: 0, playerName }],
+            players: [{ id: socket.id, playerName, owner: true }],
             started: false,
             song: {
                 category: null,
@@ -36,6 +36,8 @@ module.exports = {
         scores.scoresInitialize(socket, roomID, socket.id)
         socket.join(roomID)
         socket.emit('createRoom', roomID)
+        module.exports.statsRoom(socket)
+        music.getCategories(socket)
     },
 
     joinRoom: (socket, roomID, playerName) => {
@@ -45,6 +47,7 @@ module.exports = {
         scores.scoresInitialize(socket, roomID, socket.id)
         socket.join(roomID)
         socket.to(roomID).emit('playerJoined', { id: socket.id, score: 0, playerName })
+        module.exports.statsRoom(socket)
     },
 
     leaveRoom: (socket) => {
@@ -109,11 +112,15 @@ module.exports = {
             artistGuessed: false,
             titleGuessed: false,
             category: rooms[roomID].song.category,
-            playing: true,
+            playing: false,
             buzzer: null,
             progress: 0,
             guesses: []
         }
+
+        setTimeout(() => {
+            rooms[roomID].song.playing = true
+        }, Math.max(timing.getMaxPing(), 1000) + 500)
     },
 
     roomResumeSong: (socket, progress) => {
@@ -121,7 +128,8 @@ module.exports = {
         const roomID = findRoom(socket)
         if (!roomID) return '403'
         if (rooms[roomID].owner != socket.id) return '403'
-        if (rooms[roomID].playing) return '401'
+        if (rooms[roomID].song.playing) return '401'
+        rooms[roomID].song.playing = true
         music.playSong(socket, roomID, rooms[roomID].song.url, progress)
     },
 
@@ -138,10 +146,10 @@ module.exports = {
     roomBuzzer: (socket) => {
         console.log('roomBuzzer', socket.id)
         const roomID = findRoom(socket)
-        if (!roomID) return '403'
-        if (!rooms[roomID].song.playing) return '401'
-        if (rooms[roomID].song.guesses.includes(socket.id)) return '403'
-        if (rooms[roomID].song.artistGuessed && rooms[roomID].song.titleGuessed) return '401'
+        if (!roomID) return '403 - No Room'
+        if (!rooms[roomID].song.playing) return '401 - Song not playing'
+        if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
+        if (rooms[roomID].song.artistGuessed && rooms[roomID].song.titleGuessed) return '401 - Already done'
         rooms[roomID].song.buzzer = {
             id: socket.id,
             time: Date.now()
@@ -153,7 +161,7 @@ module.exports = {
     },
 
     roomJudge: (socket, data) => {
-        const { artist, title } = data
+        const { artist, title, progress } = data
         console.log('roomJudge', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403'
@@ -184,6 +192,9 @@ module.exports = {
         rooms[roomID].song.guesses.push(socket.id)
         if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length || (rooms[roomID].song.titleGuessed && rooms[roomID].song.artistGuessed)) {
             module.exports.resolveSong(socket, true)
+        }
+        else {
+            module.exports.roomResumeSong(socket, progress)
         }
     },
 
