@@ -12,7 +12,6 @@
     "express": "^4.17.1",
     "jsmediatags": "^3.9.3",
     "node-fetch": "^2.6.1",
-    "socket.io": "^3.0.4",
-    "socket.io-stream": "^0.9.1"
+    "socket.io": "^3.0.4"
   }
 }
