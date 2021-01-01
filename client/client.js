@@ -34,7 +34,7 @@ const artistGuess = document.getElementById('artistGuess')
 const submitGuess = document.getElementById('submitGuess')
 
 
-let pingInterval, isOwner, category, judgeGuessData, hasGuessed
+let pingInterval, isOwner, category, judgeGuessedData, hasGuessed, correctData
 let currentRoom = {}
 let nameMapper = {}
 
@@ -81,41 +81,31 @@ socket.on('connect', () => {
         socket.emit('roomGuess', { title, artist })
     })
 
-    socket.on('artistCorrect', artist => {
-        artistGuess.value = artist
-        artistGuess.setAttribute('disabled', true)
-    })
-
-    socket.on('roomBuzzer', buzzerPlayerId => {
-        player.pause()
-        buzzer.setAttribute('disabled', true)
-        buzzerPopup.style.display = 'block'
-        if (socket.id == buzzerPlayerId) {
-            buzzerForm.style.display = 'block'
-            buzzerWait.style.display = 'none'
-            hasGuessed = true
-        }
-        else {
-            buzzerWait.style.display = 'block'
-            buzzerWait.innerText = 'Buzzered by ' + nameMapper[buzzerPlayerId]
-            buzzerForm.style.display = 'none'
-        }
-    })
-
-    socket.on('roomGuess', (data) => {
+    socket.on('closePopup', () => {
         buzzerPopup.style.display = 'none'
+    })
 
-        console.log(data)
-
+    socket.on('guessedData', (data) => {
+        correctData = data.correctData
         titleGuessAdmin.innerText = data.guessedData.title + ' | ' + data.correctData.title
         artistGuessAdmin.innerText = data.guessedData.artist + ' | ' + data.correctData.artist
         judgeGuessedData = {}
 
-        titleCorrect.addEventListener('click', judgeGuess)
-        titleWrong.addEventListener('click', judgeGuess)
+        if (data.guessedData.title) {
+            titleCorrect.addEventListener('click', judgeGuess)
+            titleWrong.addEventListener('click', judgeGuess)
+        }
+        else {
+            judgeGuessedData['title'] = null
+        }
 
-        artistCorrect.addEventListener('click', judgeGuess)
-        artistWrong.addEventListener('click', judgeGuess)
+        if (data.guessedData.artist) {
+            artistCorrect.addEventListener('click', judgeGuess)
+            artistWrong.addEventListener('click', judgeGuess)
+        }
+        else {
+            judgeGuessedData['artist'] = null
+        }
     })
 
     socket.on('createRoom', () => {
@@ -213,7 +203,23 @@ socket.on('connect', () => {
         currentCategory.innerText = setCategory
     })
 
-    socket.on('resolveSong', metaData => {
+    socket.on('roomBuzzer', buzzerPlayerId => {
+        player.pause()
+        buzzer.setAttribute('disabled', true)
+        buzzerPopup.style.display = 'block'
+        if (socket.id == buzzerPlayerId) {
+            buzzerForm.style.display = 'block'
+            buzzerWait.style.display = 'none'
+            hasGuessed = true
+        }
+        else {
+            buzzerWait.style.display = 'block'
+            buzzerWait.innerText = 'Buzzered by ' + nameMapper[buzzerPlayerId]
+            buzzerForm.style.display = 'none'
+        }
+    })
+
+    socket.on('revealSong', metaData => {
         guessedTitle.innerText = metaData.title
         guessedArtist.innerText = metaData.artist
         setTimeout(() => {
@@ -222,21 +228,29 @@ socket.on('connect', () => {
     })
 
     socket.on('artistCorrect', artist => {
+        console.log('artistCorrect', artist)
         guessedArtist.innerText = artist
+        artistGuess.value = artist
+        artistGuess.setAttribute('disabled', true)
         guessedArtist.style.color = 'green'
     })
 
     socket.on('titleCorrect', title => {
+        console.log('titleCorrect', title)
+        titleGuess.value = title
+        titleGuess.setAttribute('disabled', true)
         guessedTitle.innerText = title
         guessedTitle.style.color = 'green'
     })
 
     socket.on('artistWrong', wrongArtist => {
+        console.log('artistWrong', wrongArtist)
         guessedArtist.innerText = wrongArtist
         guessedArtist.style.color = 'red'
     })
 
     socket.on('titleWrong', wrongTitle => {
+        console.log('titleWrong', wrongTitle)
         guessedTitle.innerText = wrongTitle
         guessedTitle.style.color = 'red'
     })
@@ -259,7 +273,6 @@ function setCategory(value) {
 
 function judgeGuess(element) {
     const name = element.target.id
-    console.log(name)
     const type = name.startsWith('artist') ? 'artist' : 'title'
     const correct = name.endsWith('Correct')
     judgeGuessedData[type] = correct
@@ -267,7 +280,8 @@ function judgeGuess(element) {
     document.getElementById(`${type}Correct`).removeEventListener('click', judgeGuess)
     if (Object.values(judgeGuessedData).length == 2) {
         judgeGuessedData.progress = player.currentTime / player.duration
-        return socket.emit('judgeGuess', judgeGuessedData)
+        judgeGuessedData.correctData = correctData
+        return socket.emit('roomJudge', judgeGuessedData)
     }
 }
 
