@@ -6,8 +6,6 @@ module.exports = io => {
     io.on('connection', socket => {
         console.log('connected', socket.id)
 
-        socket.on('ping', (timestamp) => timing.ping(socket, timestamp))
-
         socket.on('getCategories', () => music.getCategories(socket))
 
         socket.on('createRoom', (playerName) => room.createRoom(socket, playerName))
@@ -24,14 +22,16 @@ module.exports = io => {
         socket.on('roomGuess', (data) => room.roomGuess(socket, data, io))
         socket.on('roomJudge', (data) => room.roomJudge(socket, data, io))
         socket.on('roomResumeSong', (progress) => room.roomResumeSong(socket, progress))
-        socket.on('revealSong', (all) => room.revealSong(socket, all))
 
-        socket.on('scoresGet', () => room.scoresGet(socket))
-
-
-        socket.on('disconnect', () => {
+        socket.on('disconnecting', () => {
             room.leaveRoom(socket)
             console.log('disconnect', socket.id)
         })
+
+        socket.on('ping', (timestamp) => { timing.ping(socket, timestamp) })
     })
+
+    setInterval(() => {
+        io.emit('ping', Date.now())
+    }, 2000)
 }
