@@ -26,6 +26,7 @@ const titleWrong = document.getElementById('titleWrong')
 
 // Buzzer Realted
 const buzzer = document.getElementById('buzzer')
+const skip = document.getElementById('buzzer')
 const buzzerWait = document.getElementById('buzzerWait')
 const buzzerForm = document.getElementById('buzzerForm')
 const buzzerPopup = document.getElementById('buzzerPopup')
@@ -73,6 +74,11 @@ socket.on('connect', () => {
     buzzer.addEventListener('click', () => {
         socket.emit('roomBuzzer')
     })
+
+    skip.addEventListener('click', () => {
+        socket.emit('roomSkip')
+    })
+
 
     submitGuess.addEventListener('click', () => {
         const artist = artistGuess.disabled ? null : artistGuess.value.trim()
@@ -185,7 +191,10 @@ socket.on('connect', () => {
         }
         player.src = data.url
         setTimeout(() => {
-            if (data.progress == 0 || !hasGuessed) buzzer.removeAttribute('disabled')
+            if (data.progress == 0 || !hasGuessed) {
+                skip.removeAttribute('disabled')
+                buzzer.removeAttribute('disabled')
+            }
             player.currentTime = player.duration * data.progress
             player.play()
         }, data.start - Date.now())
@@ -206,6 +215,7 @@ socket.on('connect', () => {
     socket.on('roomBuzzer', buzzerPlayerId => {
         player.pause()
         buzzer.setAttribute('disabled', true)
+        skip.setAttribute('disabled', true)
         buzzerPopup.style.display = 'block'
         if (socket.id == buzzerPlayerId) {
             buzzerForm.style.display = 'block'

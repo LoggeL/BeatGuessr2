@@ -37,6 +37,7 @@ module.exports = {
         socket.join(roomID)
         socket.emit('createRoom', roomID)
         module.exports.statsRoom(socket)
+        songs.newRoom(roomID)
         music.getCategories(socket)
     },
 
@@ -53,8 +54,8 @@ module.exports = {
 
     leaveRoom: (socket) => {
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
         if (!roomID) return '403'
+        if (!rooms[roomID]) return '404'
         console.log('leaveRoom', socket.id)
         if (!rooms[roomID]) return console.error('leaveRoom', 'noRoom')
         if (roomID == 'room_' + socket.id) {
@@ -62,6 +63,7 @@ module.exports = {
             console.log('destroyRoom', roomID)
             delete rooms[roomID]
             scores.scoresDestroy(socket, roomID)
+            songs.destroyRoom(roomID)
             socket.to(roomID).emit('destroyRoom')
         }
         else {
@@ -78,8 +80,8 @@ module.exports = {
 
     statsRoom: (socket) => {
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
         if (!roomID) return '403'
+        if (!rooms[roomID]) return '404'
         console.log('statsRoom', roomID)
         if (!rooms[roomID]) {
             socket.emit('statsRoom', 'Room not found')
@@ -102,8 +104,8 @@ module.exports = {
     roomPlaySong: (socket) => {
         console.log('roomPlaySong', socket.id)
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
         if (!roomID) return '403'
+        if (!rooms[roomID]) return '404'
         if (rooms[roomID].owner != socket.id) return '403'
         if (rooms[roomID].song.playing) return '401'
         if (!rooms[roomID].song.category) return '401'
@@ -131,8 +133,8 @@ module.exports = {
     roomResumeSong: (socket, progress) => {
         console.log('roomResumeSong', socket.id)
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
         if (!roomID) return '403'
+        if (!rooms[roomID]) return '404'
         if (rooms[roomID].owner != socket.id) return '403'
         if (rooms[roomID].song.playing) return '401'
         rooms[roomID].song.playing = true
@@ -142,8 +144,8 @@ module.exports = {
     roomPauseSong: (socket) => {
         console.log('roomPauseSong', socket.id)
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
         if (!roomID) return '403'
+        if (!rooms[roomID]) return '404'
         if (rooms[roomID].owner != socket.id) return '403'
         if (!rooms[roomID].song.playing) return '401'
         rooms[roomID].song.playing = false
@@ -153,8 +155,8 @@ module.exports = {
     roomBuzzer: (socket) => {
         console.log('roomBuzzer', socket.id)
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
-        if (!roomID) return '403 - No Room'
+        if (!roomID) return '403 - Not in a Room'
+        if (!rooms[roomID]) return '404 - Invalid Room'
         if (!rooms[roomID].song.playing) return '401 - Song not playing'
         if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
         if (rooms[roomID].song.artistGuessed && rooms[roomID].song.titleGuessed) return '401 - Already done'
@@ -166,6 +168,21 @@ module.exports = {
         music.pauseSong(socket, roomID)
         socket.to(roomID).emit('roomBuzzer', socket.id)
         socket.emit('roomBuzzer', socket.id)
+    },
+
+    roomSkip: (socket) => {
+        const roomID = findRoom(socket)
+        if (!roomID) return '403 - No Room'
+        if (!rooms[roomID]) return '404'
+        if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
+        if (!rooms[roomID].song.playing) return '401 - Song not playing'
+
+        rooms[roomID].song.guesses.push(socket.id)
+        socket.to(roomID).emit('roomBuzzer', socket.id)
+        socket.emit('roomBuzzer', socket.id)
+        if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length) {
+            module.exports.revealSong(socket, true)
+        }
     },
 
     roomJudge: (socket, data, io) => {
