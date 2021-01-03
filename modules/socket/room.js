@@ -1,11 +1,11 @@
 const music = require('./music.js')
-const scores = require('./scores.js')
 const songs = require('./songs.js')
 const timing = require('./timing.js')
 
 let rooms = {}
 
 const findRoom = (socket) => {
+    if (!socket.rooms) return
     if (socket.rooms.size == 0) return
     for (let roomID of socket.rooms) {
         if (roomID.startsWith('room_')) return roomID
@@ -33,7 +33,6 @@ module.exports = {
                 guesses: []
             },
         }
-        scores.scoresInitialize(socket, roomID, socket.id)
         socket.join(roomID)
         socket.emit('createRoom', roomID)
         module.exports.statsRoom(socket)
@@ -46,7 +45,6 @@ module.exports = {
         console.log('joinRoom', playerName, socket.id, 'to', roomID)
         if (!rooms[roomID]) return socket.emit('statsRoom', 404)
         rooms[roomID].players.push({ id: socket.id, score: 0, playerName })
-        scores.scoresInitialize(socket, roomID, socket.id)
         socket.join(roomID)
         socket.to(roomID).emit('playerJoined', { id: socket.id, score: 0, playerName })
         module.exports.statsRoom(socket)
@@ -62,7 +60,6 @@ module.exports = {
             // Host leaves, destroy room
             console.log('destroyRoom', roomID)
             delete rooms[roomID]
-            scores.scoresDestroy(socket, roomID)
             songs.destroyRoom(roomID)
             socket.to(roomID).emit('destroyRoom')
         }
@@ -71,7 +68,6 @@ module.exports = {
             const index = rooms[roomID].players.findIndex(p => p.id == socket.id);
             if (index > -1) {
                 console.log('leaveRoom', roomID)
-                scores.scoresRemove(socket, roomID, socket.id)
                 rooms[roomID].players.splice(index, 1);
                 socket.to(roomID).emit('playerLeft', socket.id)
             }
@@ -104,12 +100,12 @@ module.exports = {
     roomPlaySong: (socket) => {
         console.log('roomPlaySong', socket.id)
         const roomID = findRoom(socket)
-        if (!roomID) return '403'
-        if (!rooms[roomID]) return '404'
-        if (rooms[roomID].owner != socket.id) return '403'
-        if (rooms[roomID].song.playing) return '401'
-        if (!rooms[roomID].song.category) return '401'
-        const url = songs.getSong(rooms[roomID].song.category)
+        if (!roomID) return '403 - Not in a Room'
+        if (!rooms[roomID]) return '404 - Invalid Room'
+        if (rooms[roomID].owner != socket.id) return '403 - Not owner'
+        //if (rooms[roomID].song.playing) return '401 - Already playing'
+        if (!rooms[roomID].song.category) return '401 - No category set'
+        const url = songs.getSong(rooms[roomID].song.category, roomID)
         music.playSong(socket, roomID, url)
 
         if (!rooms[roomID].started) rooms[roomID].started = Date.now()
@@ -138,6 +134,7 @@ module.exports = {
         if (rooms[roomID].owner != socket.id) return '403'
         if (rooms[roomID].song.playing) return '401'
         rooms[roomID].song.playing = true
+        rooms[roomID].song.buzzer = null
         music.playSong(socket, roomID, rooms[roomID].song.url, progress)
     },
 
@@ -171,15 +168,17 @@ module.exports = {
     },
 
     roomSkip: (socket) => {
+        console.log('roomSkip', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - No Room'
         if (!rooms[roomID]) return '404'
         if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
         if (!rooms[roomID].song.playing) return '401 - Song not playing'
 
+        console.log('roomSkip', socket.id)
         rooms[roomID].song.guesses.push(socket.id)
-        socket.to(roomID).emit('roomBuzzer', socket.id)
-        socket.emit('roomBuzzer', socket.id)
+        socket.to(roomID).emit('roomSkip', socket.id)
+        socket.emit('roomSkip', socket.id)
         if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length) {
             module.exports.revealSong(socket, true)
         }
@@ -187,28 +186,36 @@ module.exports = {
 
     roomJudge: (socket, data, io) => {
         const { artist, title, progress, correctData } = data
-        console.log('roomJudge', socket.id, data)
+        console.log('roomJudge', socket.id)
         const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
-        if (!roomID) return '403'
-        if (rooms[roomID].owner != socket.id) return '403'
+        if (!roomID) return '403 - Not in a Room'
+        if (!rooms[roomID]) return '404 - Invalid Room'
+        if (rooms[roomID].owner != socket.id) return '403 - Not owner'
+        if (!rooms[roomID].song.buzzer) return '403 - Not buzzered'
+
+        const buzzerPlayer = rooms[roomID].players.find(p => p.id === rooms[roomID].song.buzzer.id)
 
         if (artist && !rooms[roomID].song.artistGuessed) {
+            console.log('artistCorrect', correctData.artist)
             rooms[roomID].song.artistGuessed = socket.id
-            io.to(roomID).emit('artistCorrect', correctData.artist)
-            scores.scoresIncrement(socket, roomID, socket.id)
+            buzzerPlayer.score++
+            io.to(roomID).emit('artistCorrect', correctData.artist, rooms[roomID].players)
         }
         else if (!rooms[roomID].song.artistGuessed) {
-            io.to(roomID).emit('artistWrong', null)
+            console.log('artistWrong')
+            io.to(roomID).emit('artistWrong')
         }
 
         if (title && !rooms[roomID].song.titleGuessed) {
+            console.log('titleCorrect', correctData.title)
             rooms[roomID].song.titleGuessed = socket.id
-            io.to(roomID).emit('titleCorrect', correctData.title)
-            scores.scoresIncrement(socket, roomID, socket.id)
+            buzzerPlayer.score++
+            console.log(buzzerPlayer)
+            io.to(roomID).emit('titleCorrect', correctData.title, rooms[roomID].players)
         }
         else if (!rooms[roomID].song.titleGuessed) {
-            io.to(roomID).emit('titleWrong', null)
+            console.log('titleWrong')
+            io.to(roomID).emit('titleWrong')
         }
 
         rooms[roomID].song.guesses.push(socket.id)
@@ -242,7 +249,7 @@ module.exports = {
         const roomID = findRoom(socket)
         if (!rooms[roomID]) return '404'
         if (rooms[roomID].owner != socket.id) return '403'
-        const categories = songs.getCategories(socket)
+        const categories = songs.getCategories(socket).map(c => c.category)
         if (!categories.includes(category)) return '404'
         rooms[roomID].song.category = category
         socket.to(roomID).emit('setCategory', category)
@@ -253,18 +260,9 @@ module.exports = {
         console.log('revealSong', socket.id)
         const roomID = findRoom(socket)
         if (!rooms[roomID]) return '404'
-        if (rooms[roomID].owner != socket.id) return '403'
         songs.getMeta(rooms[roomID].song.url).then(metaData => {
             socket.emit('revealSong', metaData.tags)
             if (all) socket.to(roomID).emit('revealSong', metaData.tags)
         })
-    },
-
-    scoresGet: (socket) => {
-        console.log('scoresGet', socket.id)
-        const roomID = findRoom(socket)
-        if (!rooms[roomID]) return '404'
-        if (rooms[roomID]) return '404'
-        scores.scoresGet(socket, roomID)
     }
 }
