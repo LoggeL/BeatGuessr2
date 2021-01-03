@@ -3,7 +3,7 @@ const timing = require('./timing.js')
 
 module.exports = {
     playSong: (socket, roomID, url, progress) => {
-        console.log('playSong', socket.id)
+        console.log('playSong', socket.id, url)
         const data = {
             url: url,
             start: Date.now() + Math.max(timing.getMaxPing(), 1000) + 500,

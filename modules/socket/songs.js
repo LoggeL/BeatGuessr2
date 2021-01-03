@@ -5,7 +5,7 @@ const playedSongs = {}
 
 module.exports = {
     newRoom: (roomID) => {
-        playedSongs[roomID] = {}
+        playedSongs[roomID] = []
     },
 
     destroyRoom: (roomID) => {
@@ -13,17 +13,17 @@ module.exports = {
     },
 
     getSong: (category, roomID) => {
+        console.log('getSong', category, roomID)
         if (!songs[category]) return null
         if (!playedSongs[roomID]) return null
         const categorySongs = songs[category].filter(s => !playedSongs[roomID].includes(s))
         const random = Math.floor(Math.random() * categorySongs.length)
         playedSongs[roomID].push(categorySongs[random])
         return categorySongs[random]
-        //return 'https://cdn.discordapp.com/attachments/737612051056164986/793653657421348874/The_Weeknd_-_Blinding_Lights.mp3'
     },
 
     getCategories: () => {
-        return categories.map(c => c + ' - ' + songs[c].length)
+        return categories.map(c => ({ category: c, count: songs[c].length }))
     },
 
     getMeta: (url) =>
