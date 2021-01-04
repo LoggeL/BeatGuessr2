@@ -237,9 +237,12 @@ module.exports = {
         if (rooms[roomID].song.playing) return '401 - Song is playing'
         if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
         if (!rooms[roomID].song.buzzer) return '403 - Buzzer not set'
-        if (rooms[roomID].song.buzzer.time + 20000 < Date.now()) return '403 - Took too long'
+        //if (rooms[roomID].song.buzzer.time + 20000 < Date.now()) return '403 - Took too long'
         songs.getMeta(rooms[roomID].song.url).then(correctData => {
-            io.to(rooms[roomID].owner).emit('guessedData', { guessedData: { title, artist }, correctData: correctData.tags })
+            io.to(rooms[roomID].owner).emit('guessedData', {
+                guessedData: { title, artist },
+                correctData: { title: correctData.tags.title, artist: correctData.tags.artist }
+            })
             io.to(roomID).emit('closePopup')
         })
     },
@@ -261,8 +264,8 @@ module.exports = {
         const roomID = findRoom(socket)
         if (!rooms[roomID]) return '404'
         songs.getMeta(rooms[roomID].song.url).then(metaData => {
-            socket.emit('revealSong', metaData.tags)
-            if (all) socket.to(roomID).emit('revealSong', metaData.tags)
+            socket.emit('revealSong', { title: metaData.tags.title, artist: metaData.tags.artist })
+            if (all) socket.to(roomID).emit('revealSong', { title: metaData.tags.title, artist: metaData.tags.artist })
         })
     }
 }

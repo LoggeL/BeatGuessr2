@@ -23,9 +23,14 @@ module.exports = io => {
         socket.on('roomJudge', (data) => room.roomJudge(socket, data, io))
         socket.on('roomResumeSong', (progress) => room.roomResumeSong(socket, progress))
 
-        socket.on('disconnecting', () => {
+        socket.on('disconnecting', reason => {
             room.leaveRoom(socket)
-            console.log('disconnect', socket.id)
+            console.log('disconnecting', socket.id, reason)
+        })
+
+        socket.on('disconnect', reason => {
+            //room.leaveRoom(socket)
+            console.log('disconnect', socket.id, reason)
         })
 
         socket.on('ping', (timestamp) => { timing.ping(socket, timestamp) })
