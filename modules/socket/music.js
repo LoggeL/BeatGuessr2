@@ -6,7 +6,7 @@ module.exports = {
         console.log('playSong', socket.id, url)
         const data = {
             url: url,
-            start: Date.now() + Math.max(timing.getMaxPing(), 1000) + 500,
+            start: Date.now() + Math.min(Math.max(timing.getMaxPing(), 5000) + 500, 10000),
             progress: progress || 0
         }
         socket.to(roomID).emit('playSong', data)
