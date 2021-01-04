@@ -5,7 +5,7 @@ const socketHanlder = require('./modules/socket.js')
 const expressHandler = require('./modules/express.js')
 
 const app = express()
-const server = app.listen(8080)
+const server = app.listen(8000)
 
 const io = socketio(server)
 socketHanlder(io)
