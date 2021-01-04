@@ -1,12 +1,19 @@
+let timeHandler = {}
+let lastPing = Date.now()
+let lastKey = null
 
 module.exports = {
-    timeHandler: {},
+    ping: (key) => {
+        lastKey = key
+        lastPing = Date.now()
+    },
 
-    ping: (socket, timestamp) => {
-        const latency = Math.max(Date.now() - timestamp, 0)
-        module.exports.timeHandler[socket.id] = latency
+    pong: (socket, key) => {
+        if (lastKey != key) return socket.emit('pong', 1999)
+        const latency = Math.floor((Date.now() - lastPing) * 0.5)
+        timeHandler[socket.id] = latency
         socket.emit('pong', latency)
     },
 
-    getMaxPing: () => Math.max(Object.values(module.exports.timeHandler)) || 0
+    getMaxPing: () => Math.max(Object.values(timeHandler)) || 0
 }

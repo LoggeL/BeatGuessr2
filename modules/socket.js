@@ -28,15 +28,12 @@ module.exports = io => {
             console.log('disconnecting', socket.id, reason)
         })
 
-        socket.on('disconnect', reason => {
-            //room.leaveRoom(socket)
-            console.log('disconnect', socket.id, reason)
-        })
-
-        socket.on('ping', (timestamp) => { timing.ping(socket, timestamp) })
+        socket.on('pong', (key) => { timing.pong(socket, key) })
     })
 
     setInterval(() => {
-        io.emit('ping', Date.now())
+        const key = Math.random().toString(36).substring(7);
+        timing.ping(key)
+        io.emit('ping', key)
     }, 2000)
 }
