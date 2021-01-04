@@ -156,10 +156,25 @@ socket.on('connect', () => {
         currentRoom.players = data.players
         renderPlayerlist()
         data.players.forEach(p => nameMapper[p.id] = p.playerName)
+
+        if (data.song.playing) {
+            player.src = data.song.url
+            skip.removeAttribute('disabled')
+            buzzer.removeAttribute('disabled')
+
+            player.currentTime = (player.duration * data.progress) || 0
+            player.play()
+            renderPlayerlist()
+        } else if (data.song.buzzer) {
+            buzzerPopup.style.display = 'block'
+            buzzerWait.style.display = 'block'
+            buzzerWait.innerText = 'Buzzered by ' + nameMapper[buzzerPlayerId]
+            buzzerForm.style.display = 'none'
+        }
     })
 
-    socket.on('ping', date => {
-        socket.emit('ping', date)
+    socket.on('ping', (key) => {
+        socket.emit('pong', key)
     })
 
     socket.on('pong', latency => {
