@@ -40,7 +40,11 @@ let currentRoom = {}
 let nameMapper = {}
 let status = {}
 
-const socket = io()
+if (localStorage.getItem('name')) playerName.value = localStorage.getItem('name')
+
+const socket = io("http://logge.top:8000", {
+    transports: ['websocket']
+})
 
 socket.on('connect', () => {
     console.log('connected', socket.id)
@@ -58,6 +62,7 @@ socket.on('connect', () => {
     joinRoom.addEventListener('click', () => {
         const name = playerName.value
         if (!name) return alert('Kein Name')
+        localStorage.setItem('name', name)
         socket.emit('joinRoom', roomID.value.trim(), playerName.value.trim())
         joinRoom.parentNode.style.display = 'none'
     })
@@ -293,11 +298,10 @@ socket.on('connect', () => {
 
 socket.on('disconnect', reason => {
     console.log('disconnected', reason)
-    clearInterval(pingInterval)
     socket.removeAllListeners();
     setTimeout(() => {
         window.location.reload(true)
-    }, 5000)
+    }, 1000)
 })
 
 function setCategory(value) {
