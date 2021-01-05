@@ -22,7 +22,7 @@ client.on('ready', async () => {
             const URLs = filteredMessages.map(m => m.attachments.first().url)
             songURLs[channel.name] = [...songURLs[channel.name], ...URLs]
         }
-        if (Object.keys(songURLs).length == musicCategory.children.size) {
+        if (Object.values(songURLs).filter(c => c.length > 0).length == musicCategory.children.size) {
             fs.writeFileSync('songs.json', JSON.stringify(songURLs))
             process.exit(0)
         }
