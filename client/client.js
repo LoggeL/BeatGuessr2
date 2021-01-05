@@ -8,8 +8,9 @@ const joinRoom = document.getElementById('joinRoom')
 const roomID = document.getElementById('roomID')
 const scoreboard = document.getElementById('scoreboard')
 const currentCategory = document.getElementById('currentCategory')
-const guessedTitle = document.getElementById('guessedTitle')
-const guessedArtist = document.getElementById('guessedArtist')
+const userTitle = document.getElementById('userTitle')
+const userArtist = document.getElementById('userArtist')
+
 const socketID = document.getElementById('socketID')
 
 // Owner only
@@ -18,6 +19,8 @@ const categories = document.getElementById('categories')
 const adminControls = document.getElementById('adminControls')
 const titleGuessAdmin = document.getElementById('titleGuessAdmin')
 const artistGuessAdmin = document.getElementById('artistGuessAdmin')
+const titleCorrectAdmin = document.getElementById('titleCorrectAdmin')
+const artistCorrectAdmin = document.getElementById('artistCorrectAdmin')
 
 const artistCorrect = document.getElementById('artistCorrect')
 const artistWrong = document.getElementById('artistWrong')
@@ -33,9 +36,10 @@ const buzzerPopup = document.getElementById('buzzerPopup')
 const titleGuess = document.getElementById('titleGuess')
 const artistGuess = document.getElementById('artistGuess')
 const submitGuess = document.getElementById('submitGuess')
+const progress = document.getElementById('progress')
 
 
-let pingInterval, isOwner, category, judgeGuessedData, hasGuessed, correctData
+let pingInterval, isOwner, category, judgeGuessedData, hasGuessed, correctData, progressStart, buzzerPlayerId, ownID, latency
 let currentRoom = {}
 let nameMapper = {}
 let status = {}
@@ -50,6 +54,7 @@ socket.on('connect', () => {
     console.log('connected', socket.id)
 
     socketID.innerText = socket.id
+    ownID = socket.id
 
     createRoom.addEventListener('click', () => {
         const name = playerName.value
@@ -97,14 +102,18 @@ socket.on('connect', () => {
 
     socket.on('closePopup', () => {
         console.log('closePoup')
+        progress.parentElement.style.display = 'none'
+        progress.style.width = '100%'
         buzzerPopup.style.display = 'none'
     })
 
     socket.on('guessedData', (data) => {
-        console.log('guessedData')
+        console.log('guessedData', data)
         correctData = data.correctData
-        titleGuessAdmin.innerText = data.guessedData.title + ' | ' + data.correctData.title
-        artistGuessAdmin.innerText = data.guessedData.artist + ' | ' + data.correctData.artist
+        titleGuessAdmin.innerText = data.guessedData.title
+        titleCorrectAdmin.innerText = data.correctData.title
+        artistGuessAdmin.innerText = data.guessedData.artist
+        artistCorrectAdmin.innerText = data.correctData.artist
         judgeGuessedData = {}
 
         if (data.guessedData.title) {
@@ -177,7 +186,8 @@ socket.on('connect', () => {
         socket.emit('pong', key)
     })
 
-    socket.on('pong', latency => {
+    socket.on('pong', latencyTemp => {
+        latency = latencyTemp
         if (latency + ' ms' != pingContainer.innerText)
             pingContainer.innerText = latency + ' ms'
     })
@@ -211,10 +221,10 @@ socket.on('connect', () => {
             artistGuess.removeAttribute('disabled')
             titleGuess.value = ''
             titleGuess.removeAttribute('disabled')
-            guessedTitle.innerText = ''
-            guessedTitle.style.color = 'black'
-            guessedArtist.innerText = ''
-            guessedArtist.style.color = 'black'
+            userTitle.innerText = ''
+            userTitle.style.color = 'black'
+            userArtist.innerText = ''
+            userArtist.style.color = 'black'
             hasGuessed = false
             status = { [currentRoomID.innerText]: 'owner' }
         }
@@ -226,8 +236,8 @@ socket.on('connect', () => {
             }
             player.currentTime = (player.duration * data.progress) || 0
             player.play()
-        }, data.start - Date.now())
-        console.log('playSong', 'Starts in', data.start - Date.now(), 'ms', data, 'at', data.progress * 100, '%')
+        }, data.start - latency)
+        console.log('playSong', 'Starts in', data.start - latency, 'ms', data, 'at', data.progress * 100, '%')
         renderPlayerlist()
     })
 
@@ -242,9 +252,10 @@ socket.on('connect', () => {
         currentCategory.innerText = setCategory
     })
 
-    socket.on('roomBuzzer', buzzerPlayerId => {
+    socket.on('roomBuzzer', buzzerPlayerIDTemp => {
+        buzzerPlayerId = buzzerPlayerIDTemp
         console.log('roomBuzzer', buzzerPlayerId)
-        status[buzzerPlayerId] = 'Buzzered'
+        status[buzzerPlayerId] = 'Buzzed'
         player.pause()
         buzzer.setAttribute('disabled', true)
         skip.setAttribute('disabled', true)
@@ -256,9 +267,15 @@ socket.on('connect', () => {
         }
         else {
             buzzerWait.style.display = 'block'
-            buzzerWait.innerText = 'Buzzered by ' + nameMapper[buzzerPlayerId]
+            buzzerWait.innerText = 'Buzzed by ' + nameMapper[buzzerPlayerId]
             buzzerForm.style.display = 'none'
         }
+        progress.parentElement.style.display = 'block'
+        progress.style.width = '100%'
+        setTimeout(() => {
+            progress.style.width = '0%'
+        }, 1)
+
         renderPlayerlist()
     })
 
@@ -269,8 +286,8 @@ socket.on('connect', () => {
 
     socket.on('revealSong', metaData => {
         console.log('revealSong', metaData)
-        guessedTitle.innerText = metaData.title
-        guessedArtist.innerText = metaData.artist
+        userTitle.innerText = metaData.title
+        userArtist.innerText = metaData.artist
         player.play()
         setTimeout(() => {
             player.pause()
@@ -280,10 +297,10 @@ socket.on('connect', () => {
 
     socket.on('artistCorrect', (artist, players) => {
         console.log('artistCorrect', artist)
-        guessedArtist.innerText = artist
+        userArtist.innerText = artist
         artistGuess.value = artist
         artistGuess.setAttribute('disabled', true)
-        guessedArtist.style.color = 'green'
+        userArtist.style.color = 'green'
         currentRoom.players = players
         renderPlayerlist()
     })
@@ -292,22 +309,22 @@ socket.on('connect', () => {
         console.log('titleCorrect', title)
         titleGuess.value = title
         titleGuess.setAttribute('disabled', true)
-        guessedTitle.innerText = title
-        guessedTitle.style.color = 'green'
+        userTitle.innerText = title
+        userTitle.style.color = 'green'
         currentRoom.players = players
         renderPlayerlist()
     })
 
     socket.on('artistWrong', wrongArtist => {
         console.log('artistWrong', wrongArtist)
-        guessedArtist.innerText = wrongArtist
-        guessedArtist.style.color = 'red'
+        userArtist.innerText = wrongArtist
+        userArtist.style.color = 'red'
     })
 
     socket.on('titleWrong', wrongTitle => {
         console.log('titleWrong', wrongTitle)
-        guessedTitle.innerText = wrongTitle
-        guessedTitle.style.color = 'red'
+        userTitle.innerText = wrongTitle
+        userTitle.style.color = 'red'
     })
 })
 
@@ -330,9 +347,13 @@ function judgeGuess(element) {
     const type = name.startsWith('artist') ? 'artist' : 'title'
     const correct = name.endsWith('Correct')
     judgeGuessedData[type] = correct
+    if (!correct) {
+        if (type == "artist") judgeGuessedData.wrongArtist = userArtist.innerText
+        else if (type == "title") judgeGuessedData.wrongTitle = userTitle.innerText
+    }
     document.getElementById(`${type}Wrong`).removeEventListener('click', judgeGuess)
     document.getElementById(`${type}Correct`).removeEventListener('click', judgeGuess)
-    if (Object.values(judgeGuessedData).length == 2) {
+    if (judgeGuessedData.artist !== undefined && judgeGuessedData.title !== undefined) {
         judgeGuessedData.progress = player.currentTime / player.duration
         judgeGuessedData.correctData = correctData
         return socket.emit('roomJudge', judgeGuessedData)

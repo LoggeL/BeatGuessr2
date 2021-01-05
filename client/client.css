@@ -27,3 +27,22 @@ div {
   width: 75%;
   top: 0;
 }
+
+#progressBar {
+  height: 10px;
+  bottom: 0;
+  position: fixed;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  left: 0;
+  display: none;
+}
+
+#progress {
+  background-color: red;
+  height: 10px;
+  margin: 0;
+  padding: 0;
+  transition: width 20s linear;
+}

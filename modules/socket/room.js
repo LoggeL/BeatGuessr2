@@ -171,7 +171,7 @@ module.exports = {
         console.log('roomSkip', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - No Room'
-        if (!rooms[roomID]) return '404'
+        if (!rooms[roomID]) return '404 - Invalid Room'
         if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
         if (!rooms[roomID].song.playing) return '401 - Song not playing'
 
@@ -185,7 +185,7 @@ module.exports = {
     },
 
     roomJudge: (socket, data, io) => {
-        const { artist, title, progress, correctData } = data
+        const { artist, title, progress, correctData, wrongTitle, wrongArtist } = data
         console.log('roomJudge', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - Not in a Room'
@@ -203,7 +203,7 @@ module.exports = {
         }
         else if (!rooms[roomID].song.artistGuessed) {
             console.log('artistWrong')
-            io.to(roomID).emit('artistWrong')
+            io.to(roomID).emit('artistWrong', wrongArtist)
         }
 
         if (title && !rooms[roomID].song.titleGuessed) {
@@ -215,7 +215,7 @@ module.exports = {
         }
         else if (!rooms[roomID].song.titleGuessed) {
             console.log('titleWrong')
-            io.to(roomID).emit('titleWrong')
+            io.to(roomID).emit('titleWrong', wrongTitle)
         }
 
         rooms[roomID].song.guesses.push(socket.id)

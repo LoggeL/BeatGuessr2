@@ -66,10 +66,10 @@
     <div>
         <p>Guessed Song</p>
         <span>Title: </span>
-        <span id="guessedTitle"></span>
+        <span id="userTitle"></span>
         <br />
         <span>Artist: </span>
-        <span id="guessedArtist"></span>
+        <span id="userArtist"></span>
     </div>
 
     <div id="adminControls" style="display:none;">
@@ -78,13 +78,17 @@
         <p>Categories</p>
         <p id="categories"></p>
         <p>Title guess</p>
-        <p id="titleGuessAdmin"></p>
+        <span id="titleGuessAdmin"></span>
+        <p>Correct Title</p>
+        <span id="titleCorrectAdmin"></span>
         <button id="titleCorrect">Correct</button>
         <button id="titleWrong">Wrong</button>
         <br />
 
         <p>Artist guess</p>
         <p id="artistGuessAdmin"></p>
+        <p>Artist Correct</p>
+        <p id="artistCorrectAdmin"></p>
         <button id="artistCorrect">Correct</button>
         <button id="artistWrong">Wrong</button>
     </div>
@@ -101,6 +105,10 @@
             Artist: <input id="artistGuess"> <br />
             <button id="submitGuess">Absenden</button>
         </div>
+    </div>
+
+    <div id="progressBar">
+        <div id="progress" style="width:100%;"></div>
     </div>
 
     <script src="socket-io-client.js"></script>
