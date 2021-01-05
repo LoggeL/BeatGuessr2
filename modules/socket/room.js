@@ -184,9 +184,8 @@ module.exports = {
         }
     },
 
-    roomJudge: (socket, data, io) => {
-        const { artist, title, progress, correctData, wrongTitle, wrongArtist } = data
-        console.log('roomJudge', socket.id)
+    roomJudgeTitle: (socket, correct, title, io) => {
+        console.log('roomJudgeTitle', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - Not in a Room'
         if (!rooms[roomID]) return '404 - Invalid Room'
@@ -195,27 +194,45 @@ module.exports = {
 
         const buzzerPlayer = rooms[roomID].players.find(p => p.id === rooms[roomID].song.buzzer.id)
 
-        if (artist && !rooms[roomID].song.artistGuessed) {
-            console.log('artistCorrect', correctData.artist)
-            rooms[roomID].song.artistGuessed = socket.id
-            buzzerPlayer.score++
-            io.to(roomID).emit('artistCorrect', correctData.artist, rooms[roomID].players)
-        }
-        else if (!rooms[roomID].song.artistGuessed) {
-            console.log('artistWrong')
-            io.to(roomID).emit('artistWrong', wrongArtist)
-        }
-
-        if (title && !rooms[roomID].song.titleGuessed) {
+        if (correct && !rooms[roomID].song.titleGuessed) {
             console.log('titleCorrect', correctData.title)
             rooms[roomID].song.titleGuessed = socket.id
             buzzerPlayer.score++
-            console.log(buzzerPlayer)
             io.to(roomID).emit('titleCorrect', correctData.title, rooms[roomID].players)
         }
         else if (!rooms[roomID].song.titleGuessed) {
             console.log('titleWrong')
-            io.to(roomID).emit('titleWrong', wrongTitle)
+            io.to(roomID).emit('titleWrong', title)
+        }
+
+        rooms[roomID].song.guesses.push(socket.id)
+        if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length || (rooms[roomID].song.titleGuessed && rooms[roomID].song.artistGuessed)) {
+            module.exports.revealSong(socket, true)
+        }
+        else {
+            module.exports.roomResumeSong(socket, progress)
+        }
+    },
+
+    roomJudgeArtist: (socket, correct, artist, io) => {
+        console.log('roomJudgeArtist', socket.id)
+        const roomID = findRoom(socket)
+        if (!roomID) return '403 - Not in a Room'
+        if (!rooms[roomID]) return '404 - Invalid Room'
+        if (rooms[roomID].owner != socket.id) return '403 - Not owner'
+        if (!rooms[roomID].song.buzzer) return '403 - Not buzzered'
+
+        const buzzerPlayer = rooms[roomID].players.find(p => p.id === rooms[roomID].song.buzzer.id)
+
+        if (correct && !rooms[roomID].song.artistGuessed) {
+            console.log('artistCorrect', correctData.artist)
+            rooms[roomID].song.titleGuessed = socket.id
+            buzzerPlayer.score++
+            io.to(roomID).emit('artistCorrect', correctData.artist, rooms[roomID].players)
+        }
+        else if (!rooms[roomID].song.artistGuessed) {
+            console.log('artistWrong', artist)
+            io.to(roomID).emit('artistWrong', artist)
         }
 
         rooms[roomID].song.guesses.push(socket.id)

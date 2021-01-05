@@ -20,7 +20,8 @@ module.exports = io => {
         socket.on('roomBuzzer', () => room.roomBuzzer(socket))
         socket.on('roomSkip', () => room.roomSkip(socket))
         socket.on('roomGuess', (data) => room.roomGuess(socket, data, io))
-        socket.on('roomJudge', (data) => room.roomJudge(socket, data, io))
+        socket.on('roomJudgeTitle', (correct, title) => room.roomJudge(socket, correct, title, io))
+        socket.on('roomJudgeArtist', (correct, artist) => room.roomJudge(socket, correct, artist, io))
         socket.on('roomResumeSong', (progress) => room.roomResumeSong(socket, progress))
 
         socket.on('disconnecting', reason => {
