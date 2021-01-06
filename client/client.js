@@ -39,7 +39,7 @@ const submitGuess = document.getElementById('submitGuess')
 const progress = document.getElementById('progress')
 
 
-let pingInterval, isOwner, category, hasGuessed, correctData, buzzerPlayerId, ownID, latency, buzzerTimeout
+let pingInterval, isOwner, category, hasGuessed, correctData, buzzerPlayerId, latency, buzzerTimeout
 let judgeDataCollector = {}
 let currentRoom = {}
 let nameMapper = {}
@@ -55,8 +55,7 @@ socket.on('connect', () => {
     console.log('connected', socket.id)
 
     socketID.innerText = socket.id
-    ownID = socket.id
-
+    
     createRoom.addEventListener('click', () => {
         const name = playerName.value
         if (!name) return alert('Kein Name')
