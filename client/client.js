@@ -122,6 +122,8 @@ socket.on('connect', () => {
             titleCorrect.parentElement.style.display = 'block'
             titleCorrect.addEventListener('click', judgeGuess)
             titleWrong.addEventListener('click', judgeGuess)
+        } else if (data.guessedData.title == data.correctData.title) {
+            titleCorrect.click()
         } else {
             judgeDataCollector.titleWrong = '?'
         }
@@ -130,8 +132,18 @@ socket.on('connect', () => {
             artistCorrect.parentElement.style.display = 'block'
             artistCorrect.addEventListener('click', judgeGuess)
             artistWrong.addEventListener('click', judgeGuess)
+        } else if (data.guessedData.artist == data.correctData.artist) {
+            titleCorrect.click()
         } else {
             judgeDataCollector.artistWrong = '?'
+        }
+
+        if (!data.guessedData.title && !data.guessedData.artist) {
+            judgeDataCollector.artistWrong = '?'
+            judgeDataCollector.titleWrong = '?'
+            socket.emit('roomJudge', judgeDataCollector)
+            socket.emit('roomSetProgress', player.currentTime)
+            judgeDataCollector = {}
         }
     })
 
