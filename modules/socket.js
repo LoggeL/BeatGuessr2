@@ -15,13 +15,13 @@ module.exports = io => {
         socket.on('setCategory', (category) => room.setCategory(socket, category))
 
         socket.on('startRoom', () => room.startRoom(socket))
-        socket.on('roomPauseSong', () => room.roomPauseSong(socket))
-        socket.on('roomPlaySong', () => room.roomPlaySong(socket))
-        socket.on('roomBuzzer', () => room.roomBuzzer(socket))
-        socket.on('roomSkip', () => room.roomSkip(socket))
-        socket.on('roomGuess', (data) => room.roomGuess(socket, data, io))
-        socket.on('roomJudge', (data) => room.roomJudge(socket, data, io))
-        socket.on('roomSetProgress', (progress) => room.roomSetProgress(socket, progress))
+        socket.on('pauseSong', () => room.pauseSong(socket))
+        socket.on('playSong', () => room.playSong(socket))
+        socket.on('buzzer', () => room.buzzer(socket))
+        socket.on('skip', () => room.skip(socket))
+        socket.on('guess', (data) => room.guess(socket, data, io))
+        socket.on('judge', (data) => room.judge(socket, data, io))
+        socket.on('setProgress', (progress) => room.setProgress(socket, progress))
 
         socket.on('disconnecting', reason => {
             room.leaveRoom(socket)

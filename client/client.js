@@ -75,7 +75,7 @@ socket.on('connect', () => {
 
     startGame.addEventListener('click', () => {
         if (category) {
-            socket.emit('roomPlaySong')
+            socket.emit('playSong')
             startGame.remove()
         }
         else {
@@ -84,13 +84,13 @@ socket.on('connect', () => {
     })
 
     buzzer.addEventListener('click', () => {
-        socket.emit('roomBuzzer')
+        socket.emit('buzzer')
         console.log('Buzzer press')
     })
 
     skip.addEventListener('click', () => {
         console.log('Skip press')
-        socket.emit('roomSkip')
+        socket.emit('skip')
     })
 
 
@@ -100,7 +100,7 @@ socket.on('connect', () => {
 
         clearTimeout(buzzerTimeout)
 
-        socket.emit('roomGuess', { title, artist })
+        socket.emit('guess', { title, artist })
     })
 
     socket.on('closePopup', () => {
@@ -122,27 +122,33 @@ socket.on('connect', () => {
             titleCorrect.parentElement.style.display = 'block'
             titleCorrect.addEventListener('click', judgeGuess)
             titleWrong.addEventListener('click', judgeGuess)
-        } else if (data.guessedData.title == data.correctData.title) {
-            titleCorrect.click()
         } else {
             judgeDataCollector.titleWrong = '?'
+        }
+
+        if (data.guessedData.title == data.correctData.title) {
+            console.log('titleAutoCorrect')
+            titleCorrect.click()
         }
 
         if (data.guessedData.artist) {
             artistCorrect.parentElement.style.display = 'block'
             artistCorrect.addEventListener('click', judgeGuess)
             artistWrong.addEventListener('click', judgeGuess)
-        } else if (data.guessedData.artist == data.correctData.artist) {
-            titleCorrect.click()
         } else {
             judgeDataCollector.artistWrong = '?'
+        }
+
+        if (data.guessedData.artist == data.correctData.artist) {
+            console.log('titleAutoCorrect')
+            artistCorrect.click()
         }
 
         if (!data.guessedData.title && !data.guessedData.artist) {
             judgeDataCollector.artistWrong = '?'
             judgeDataCollector.titleWrong = '?'
-            socket.emit('roomJudge', judgeDataCollector)
-            socket.emit('roomSetProgress', player.currentTime)
+            socket.emit('judge', judgeDataCollector)
+            socket.emit('setProgress', player.currentTime)
             judgeDataCollector = {}
         }
     })
@@ -267,9 +273,9 @@ socket.on('connect', () => {
         currentCategory.innerText = setCategory
     })
 
-    socket.on('roomBuzzer', buzzerPlayerIDTemp => {
+    socket.on('buzzer', buzzerPlayerIDTemp => {
         buzzerPlayerId = buzzerPlayerIDTemp
-        console.log('roomBuzzer', buzzerPlayerId)
+        console.log('buzzer', buzzerPlayerId)
         status[buzzerPlayerId] = 'Buzzed'
 
         player.pause()
@@ -304,7 +310,7 @@ socket.on('connect', () => {
         if (isOwner) socket.emit('setProgress', player.currentTime)
     })
 
-    socket.on('roomSkip', skipPlayerID => {
+    socket.on('skip', skipPlayerID => {
         status[skipPlayerID] = 'Skipped'
         renderPlayerlist()
     })
@@ -316,7 +322,7 @@ socket.on('connect', () => {
         player.play()
         setTimeout(() => {
             player.pause()
-            socket.emit('roomPlaySong')
+            socket.emit('playSong')
         }, 5000)
     })
 
@@ -384,8 +390,8 @@ function judgeGuess(element) {
     }
     if (Object.keys(judgeDataCollector).length == 2) {
         console.log(judgeDataCollector)
-        socket.emit('roomJudge', judgeDataCollector)
-        socket.emit('roomSetProgress', player.currentTime)
+        socket.emit('judge', judgeDataCollector)
+        socket.emit('setProgress', player.currentTime)
         judgeDataCollector = {}
     }
 }

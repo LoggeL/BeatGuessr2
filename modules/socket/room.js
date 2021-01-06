@@ -99,8 +99,8 @@ module.exports = {
         rooms[roomID].started = Date.now()
     },
 
-    roomPlaySong: (socket) => {
-        console.log('roomPlaySong', socket.id)
+    playSong: (socket) => {
+        console.log('playSong', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - Not in a Room'
         if (!rooms[roomID]) return '404 - Invalid Room'
@@ -133,8 +133,8 @@ module.exports = {
         }, Math.max(timing.getMaxPing(), 1000) + 500)
     },
 
-    roomResumeSong: (socket) => {
-        console.log('roomResumeSong', socket.id)
+    resumeSong: (socket) => {
+        console.log('resumeSong', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403'
         if (!rooms[roomID]) return '404'
@@ -146,8 +146,8 @@ module.exports = {
         music.playSong(socket, roomID, rooms[roomID].song.url, rooms[roomID].song.progress)
     },
 
-    roomPauseSong: (socket) => {
-        console.log('roomPauseSong', socket.id)
+    pauseSong: (socket) => {
+        console.log('pauseSong', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403'
         if (!rooms[roomID]) return '404'
@@ -157,8 +157,8 @@ module.exports = {
         music.pauseSong(socket, roomID)
     },
 
-    roomBuzzer: (socket) => {
-        console.log('roomBuzzer', socket.id)
+    buzzer: (socket) => {
+        console.log('buzzer', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - Not in a Room'
         if (!rooms[roomID]) return '404 - Invalid Room'
@@ -171,29 +171,28 @@ module.exports = {
         }
         rooms[roomID].song.playing = false
         music.pauseSong(socket, roomID)
-        socket.to(roomID).emit('roomBuzzer', socket.id)
-        socket.emit('roomBuzzer', socket.id)
+        socket.to(roomID).emit('buzzer', socket.id)
+        socket.emit('buzzer', socket.id)
     },
 
-    roomSkip: (socket) => {
-        console.log('roomSkip', socket.id)
+    skip: (socket) => {
+        console.log('skip', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - No Room'
         if (!rooms[roomID]) return '404 - Invalid Room'
         if (rooms[roomID].song.guesses.includes(socket.id)) return '403 - Already guessed'
         if (!rooms[roomID].song.playing) return '401 - Song not playing'
 
-        console.log('roomSkip', socket.id)
         rooms[roomID].song.guesses.push(socket.id)
-        socket.to(roomID).emit('roomSkip', socket.id)
-        socket.emit('roomSkip', socket.id)
+        socket.to(roomID).emit('skip', socket.id)
+        socket.emit('skip', socket.id)
         if (rooms[roomID].song.guesses.length + 1 >= rooms[roomID].players.length) {
             module.exports.revealSong(socket, true)
         }
     },
 
-    roomSetProgress: (socket, progress) => {
-        console.log('roomSetProgress', socket.id)
+    setProgress: (socket, progress) => {
+        console.log('setProgress', socket.id)
         const roomID = findRoom(socket)
         if (!roomID) return '403 - Not in a Room'
         if (!rooms[roomID]) return '404 - Invalid Room'
@@ -203,8 +202,8 @@ module.exports = {
         rooms[roomID].song.progress = progress
     },
 
-    roomJudge: (socket, data, io) => {
-        console.log('roomJudge', socket.id, data)
+    judge: (socket, data, io) => {
+        console.log('judge', socket.id, data)
         const { artistCorrect, titleCorrect, artistWrong, titleWrong } = data
         const roomID = findRoom(socket)
         if (!roomID) return '403 - Not in a Room'
@@ -246,13 +245,13 @@ module.exports = {
             module.exports.revealSong(socket, true)
         }
         else {
-            module.exports.roomResumeSong(socket)
+            module.exports.resumeSong(socket)
         }
     },
 
-    roomGuess: (socket, data, io) => {
+    guess: (socket, data, io) => {
         const { title, artist } = data
-        console.log('roomGuess', socket.id)
+        console.log('guess', socket.id)
         const roomID = findRoom(socket)
         if (!rooms[roomID]) return '404'
         if (rooms[roomID].owner == socket.id) return '403 - Owner guessing'
