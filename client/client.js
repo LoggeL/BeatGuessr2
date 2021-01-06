@@ -39,7 +39,8 @@ const submitGuess = document.getElementById('submitGuess')
 const progress = document.getElementById('progress')
 
 
-let pingInterval, isOwner, category, judgeGuessedData, hasGuessed, correctData, buzzerPlayerId, ownID, latency, buzzerCounter
+let pingInterval, isOwner, category, hasGuessed, correctData, buzzerPlayerId, ownID, latency, buzzerTimeout
+let judgeDataCollector = {}
 let currentRoom = {}
 let nameMapper = {}
 let status = {}
@@ -97,6 +98,8 @@ socket.on('connect', () => {
         const artist = artistGuess.disabled ? null : artistGuess.value.trim()
         const title = titleGuess.disabled ? null : titleGuess.value.trim()
 
+        clearTimeout(buzzerTimeout)
+
         socket.emit('roomGuess', { title, artist })
     })
 
@@ -114,20 +117,21 @@ socket.on('connect', () => {
         titleCorrectAdmin.innerText = data.correctData.title
         artistGuessAdmin.innerText = data.guessedData.artist
         artistCorrectAdmin.innerText = data.correctData.artist
-        judgeGuessedData = {}
 
         if (data.guessedData.title) {
+            titleCorrect.parentElement.style.display = 'block'
             titleCorrect.addEventListener('click', judgeGuess)
             titleWrong.addEventListener('click', judgeGuess)
         } else {
-            socket.emit('judgeRoomTitle', false)
+            judgeDataCollector.titleWrong = '?'
         }
 
         if (data.guessedData.artist) {
+            artistCorrect.parentElement.style.display = 'block'
             artistCorrect.addEventListener('click', judgeGuess)
             artistWrong.addEventListener('click', judgeGuess)
         } else {
-            socket.emit('judgeRoomArtist', false)
+            judgeDataCollector.artistWrong = '?'
         }
     })
 
@@ -169,7 +173,7 @@ socket.on('connect', () => {
             skip.removeAttribute('disabled')
             buzzer.removeAttribute('disabled')
 
-            player.currentTime = (player.duration * data.progress) || 0
+            player.currentTime = data.progress || 0
             player.play()
             renderPlayerlist()
         } else if (data.song.buzzer) {
@@ -214,6 +218,7 @@ socket.on('connect', () => {
     })
 
     socket.on('playSong', data => {
+        console.log('playSong', data)
         if (data.progress === 0) {
             artistGuess.value = ''
             artistGuess.removeAttribute('disabled')
@@ -232,10 +237,10 @@ socket.on('connect', () => {
                 skip.removeAttribute('disabled')
                 buzzer.removeAttribute('disabled')
             }
-            player.currentTime = (player.duration * data.progress) || 0
+            player.currentTime = data.progress
             player.play()
         }, data.start - latency)
-        console.log('playSong', 'Starts in', data.start - latency, 'ms', data, 'at', data.progress * 100, '%')
+        console.log('playSong', 'Starts in', data.start - latency, 'ms', data, 'at', data.progress, 's')
         renderPlayerlist()
     })
 
@@ -268,7 +273,7 @@ socket.on('connect', () => {
 
             hasGuessed = true
 
-            setTimeout(() => {
+            buzzerTimeout = setTimeout(() => {
                 submitGuess.click()
             }, 20000 + latency)
         }
@@ -281,9 +286,10 @@ socket.on('connect', () => {
         progress.style.width = '100%'
         setTimeout(() => {
             progress.style.width = '0%'
-        }, 1)
+        }, 1000)
 
         renderPlayerlist()
+        if (isOwner) socket.emit('setProgress', player.currentTime)
     })
 
     socket.on('roomSkip', skipPlayerID => {
@@ -352,15 +358,23 @@ function setCategory(value) {
 function judgeGuess(element) {
     const name = element.target.id
     if (name == "artistCorrect" || name == "artistWrong") {
+        artistCorrect.parentElement.style.display = 'none'
         artistCorrect.removeEventListener('click', judgeGuess)
         artistWrong.removeEventListener('click', judgeGuess)
-        return socket.emit('roomJudgeArtist', name.endsWith('Correct'), userArtist.innerText)
+        judgeDataCollector[name] = artistGuessAdmin.innerText
     } else if (name == "titleCorrect" || name == "titleWrong") {
+        titleCorrect.parentElement.style.display = 'none'
         titleCorrect.removeEventListener('click', judgeGuess)
         titleWrong.removeEventListener('click', judgeGuess)
-        return socket.emit('roomJudgeTitle', name.endsWith('Correct'), userTitle.innerText)
+        judgeDataCollector[name] = titleGuessAdmin.innerText
     } else {
         throw new Erorr('Error judging', name)
+    }
+    if (Object.keys(judgeDataCollector).length == 2) {
+        console.log(judgeDataCollector)
+        socket.emit('roomJudge', judgeDataCollector)
+        socket.emit('roomSetProgress', player.currentTime)
+        judgeDataCollector = {}
     }
 }
 
