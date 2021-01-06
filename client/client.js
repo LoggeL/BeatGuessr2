@@ -10,6 +10,7 @@ const scoreboard = document.getElementById('scoreboard')
 const currentCategory = document.getElementById('currentCategory')
 const userTitle = document.getElementById('userTitle')
 const userArtist = document.getElementById('userArtist')
+const volumeSlider = document.getElementById('volumeSlider')
 
 const socketID = document.getElementById('socketID')
 
@@ -55,7 +56,7 @@ socket.on('connect', () => {
     console.log('connected', socket.id)
 
     socketID.innerText = socket.id
-    
+
     createRoom.addEventListener('click', () => {
         const name = playerName.value
         if (!name) return alert('Kein Name')
@@ -419,4 +420,9 @@ function renderPlayerlist() {
 
         scoreboard.append(playerRow)
     }
+}
+
+function changeVolume() {
+    player.volume = volumeSlider.value / 100
+    console.log(player.volume)
 }

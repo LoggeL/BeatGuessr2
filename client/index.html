@@ -24,9 +24,10 @@
     </div>
 
     <div>
-        <span>Audio</span>
+        <span>Audio Volume</span>
         <br>
-        <audio id="player" controls></audio>
+        <audio id="player"></audio>
+        <input type="range" id="volumeSlider" name="volumeSlider" min="0" max="100" onchange=changeVolume()>
     </div>
 
     <div>
