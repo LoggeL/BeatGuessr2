@@ -1,0 +1,34 @@
+html,
+body,
+main {
+    height: 100%;
+}
+
+.btn-round {
+    margin: 0 auto;
+    display: block;
+    width: 150px;
+    height: 150px;
+    border-radius: 100% !important;
+    font-size: 2rem;
+}
+
+#progress {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+#progress .progress {
+    border-radius: 0;
+    border-bottom: 0;
+    border-right: 0;
+    border-left: 0;
+}
+
+.pingContainer {
+    position: fixed;
+    top: 5px;
+    right: 5px;
+    z-index: 2;
+}

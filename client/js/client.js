@@ -48,7 +48,7 @@ let status = {}
 
 if (localStorage.getItem('name')) playerName.value = localStorage.getItem('name')
 
-const socket = io("http://logge.top:8000", {
+const socket = io({
     transports: ['websocket']
 })
 
@@ -126,7 +126,7 @@ socket.on('connect', () => {
             judgeDataCollector.titleWrong = '?'
         }
 
-        if (data.guessedData.title == data.correctData.title) {
+        if (data.guessedData.title && data.correctData.title && data.guessedData.title.toLowerCase() == data.correctData.title.toLowerCase()) {
             console.log('titleAutoCorrect')
             titleCorrect.click()
         }
@@ -139,7 +139,7 @@ socket.on('connect', () => {
             judgeDataCollector.artistWrong = '?'
         }
 
-        if (data.guessedData.artist == data.correctData.artist) {
+        if (data.guessedData.artist && data.correctData.artist && data.guessedData.artist.toLowerCase() == data.correctData.artist.toLowerCase()) {
             console.log('titleAutoCorrect')
             artistCorrect.click()
         }

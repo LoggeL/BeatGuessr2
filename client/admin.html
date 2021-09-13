@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/paper.min.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <title>Admin Panel</title>
+</head>
+
+<body>
+    <div class="paper container">
+        <h3 class="margin-none">Admin Panel</h3>
+        <p>Status: <span id="gameStatus">None</span></p>
+        <div class="row">
+            <div class="col-4">
+                <div class="margin-top margin-right">
+                    <div class="paper padding-small" id="team1">
+                        <span>Team 1</span>
+                        <br />
+                        <span>0 Points</span>
+                        <ul>
+                            <li>Logge</li>
+                            <li>Logge</li>
+                            <li>Logge</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="margin-top">
+                    <div class="paper padding-small" id="team2">
+                        <span>Team 2</span>
+                        <br />
+                        <span>0 Points</span>
+                        <ul>
+                            <li>Logge</li>
+                            <li>Logge</li>
+                            <li>Logge</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="margin-top margin-left">
+                    <div class="paper padding-small" id="team3">
+                        <span>Team 3</span>
+                        <br />
+                        <span>0 Points</span>
+                        <ul>
+                            <li>Logge</li>
+                            <li>Logge</li>
+                            <li>Logge</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row col-12">
+                <button class="btn btn-success margin" id="startGame">Start Game</button>
+            </div>
+            <div class="row col-12">
+                <button class="btn btn-warning margin" id="pauseGame">Pause</button>
+                <button class="btn btn-success margin" id="resumeSong">Resume</button>
+                <button class="btn btn-danger margin" id="skipSong">Skip</button>
+            </div>
+            <div class="form-group row" style="width:100%;">
+                <label for="percentage">Volume:</label>
+                <input class="input-block" type="range" name="percentage" id="percentage" min="0" max="100"
+                    oninput="output.value = this.value + '%';">
+                <output id="output" for="percentage">50%</output>
+            </div>
+        </div>
+        <div>
+            <table style="table-layout: fixed;">
+                <thead>
+                    <tr>
+                        <th>-</th>
+                        <th>Guess</th>
+                        <th>Truth</th>
+                        <th>-</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Title</td>
+                        <td id="titleGuess">Title Guess</td>
+                        <td id="titleTurth">Title Truth</td>
+                        <td>
+                            <button class="btn btn-success">✔</button>
+                            <button class="btn btn-danger">✘</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Artist</td>
+                        <td id="artistGuess">Artist Guess</td>
+                        <td id="artistTurth">Artist Turth</td>
+                        <td>
+                            <button class="btn btn-success">✔</button>
+                            <button class="btn btn-danger">✘</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+</body>
+
+</html>

@@ -1,4 +1,7 @@
 node_modules
+old
+
+old_*.*
 
 config.json
 songs.json

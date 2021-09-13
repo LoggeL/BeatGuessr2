@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/paper.min.css">
+    <link rel="stylesheet" href="css/landing.css">
+    <title>Landing</title>
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <main class="row flex-middle">
+        <div class="pingContainer">
+            <div id="ping">0 ms</div>
+        </div>
+        <div class="paper container">
+            <h3>BeatGuessr2</h3>
+            <div class="form-group margin">
+                <label for="playerName">Name</label>
+                <input type="text" placeholder="Spielername" id="playerName">
+            </div>
+            <div class="form-group margin">
+                <label for="playerTeam">Team</label>
+                <select id="playerTeam">
+                    <option disabled selected></option>
+                    <option value="1">Team 1</option>
+                    <option value="2">Team 2</option>
+                    <option value="3">Team 3</option>
+                </select>
+            </div>
+            <button class="btn-large margin" disabled id="submitButton">Weiter</button>
+        </div>
+    </main>
+
+    <script src="js/socket-io-client.js"></script>
+    <script src="js/landing.js"></script>
+</body>
+
+</html>

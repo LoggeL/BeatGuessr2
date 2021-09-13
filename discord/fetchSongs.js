@@ -6,27 +6,35 @@ const client = new Discord.Client()
 
 client.on('ready', async () => {
     console.log(client.user.tag, 'logged in')
-    let songURLs = {}
+    let songURLs = require('./songs.json')
     const musicGuilds = client.guilds.cache.get(config.bgGuild)
     const musicCategory = musicGuilds.channels.cache.get(config.category)
-    await musicCategory.children.map(async channel => {
+    await Promise.all(musicCategory.children.map(async channel => {
         songURLs[channel.name] = []
         let size, last
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
             const messages = await channel.messages.fetch({ limit: 100, before: last })
             const lastMsg = messages.last()
-            if (!lastMsg) break
+            if (!lastMsg) return
+            console.log(i, channel.name, messages.size)
             size = messages.size
             last = messages.last().id
             const filteredMessages = messages.filter(m => m.attachments.size > 0 && m.attachments.first().url.endsWith('.mp3'))
             const URLs = filteredMessages.map(m => m.attachments.first().url)
-            songURLs[channel.name] = [...songURLs[channel.name], ...URLs]
+            for (const url of URLs) {
+                if (!songURLs[channel.name].includes(url)) {
+                    songURLs[channel.name].push(url)
+                }
+            }
+            console.log('current size', songURLs[channel.name].length)
         }
-        if (Object.values(songURLs).filter(c => c.length > 0).length == musicCategory.children.size) {
-            fs.writeFileSync('songs.json', JSON.stringify(songURLs))
-            process.exit(0)
-        }
-    })
+    }))
+    console.log('done fetching')
+    if (Object.values(songURLs).filter(c => c.length > 0).length == musicCategory.children.size) {
+        fs.writeFileSync('songs.json', JSON.stringify(songURLs))
+        console.log('songs.json updated')
+        process.exit(0)
+    }
 })
 
 client.login(config.token)
