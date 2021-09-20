@@ -43,7 +43,7 @@ socket.on('connect', () => {
     playerName.innerText = name
     playerTeam.innerText = 'Team ' + team
 
-    socket.on('updateTeams', score => {
+    socket.on('updateScores', score => {
         const teams = Object.values(score).sort((a, b) => {
             return b.score - a.score
         })
@@ -54,7 +54,7 @@ socket.on('connect', () => {
             const team = teams[i]
             const tr = document.createElement('tr')
             const td = document.createElement('td')
-            td.innerText = medals[i]
+            td.innerText = medals[i] || (i + 1)
             tr.appendChild(td)
 
             const td2 = document.createElement('td')
@@ -72,8 +72,8 @@ socket.on('connect', () => {
     socket.on('play', () => {
         gameStatus.innerText = 'Spielt...'
         buzzer.disabled = false
-        guessTitle.disabled = false
-        guessArtist.disabled = false
+        guessTitle.disabled = true
+        guessArtist.disabled = true
         guessArtist.removeAttribute('correct')
         guessTitle.removeAttribute('correct')
     })
@@ -118,18 +118,19 @@ socket.on('connect', () => {
         if (data.buzzed == socket.id) {
             if (!guessArtist.hasAttribute('correct')) guessArtist.disabled = false
             if (!guessTitle.hasAttribute('correct')) guessTitle.disabled = false
+            buzzer.disabled = false
         } else {
             buzzer.disabled = true
         }
     })
 
-    socket.on('guess', (data) => {
-        console.log(data)
-        buzzer.innerText = 'Buzzer'
-        progress.style.display = 'none'
-        gameStatus.innerText = 'Auswertung...'
-        buzzer.disabled = true
-    })
+    // socket.on('guess', (data) => {
+    //     console.log('guess', data)
+    //     buzzer.innerText = 'Buzzer'
+    //     progress.style.display = 'none'
+    //     gameStatus.innerText = 'Auswertung...'
+    //     buzzer.disabled = true
+    // })
 
     socket.on('judge', (data) => {
         if (data.artist) {
@@ -141,6 +142,13 @@ socket.on('connect', () => {
             guessTitle.setAttribute('correct', true)
         }
         gameStatus.innerText = 'Warten...'
+    })
+
+    socket.on('reset', () => {
+        alert('Runde wird neu gestartet')
+        localStorage.removeItem('name')
+        localStorage.removeItem('team')
+        window.location = '/'
     })
 
     buzzer.addEventListener('click', () => {
@@ -159,6 +167,6 @@ socket.on('connect', () => {
 
 socket.on('disconnect', () => {
     console.log('disconnected')
-    ping.innerText = `offline`
+    ping.innerText = 'offline'
     clearInterval(game.pingInterval)
 })

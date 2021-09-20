@@ -1,4 +1,5 @@
 module.exports = (game, socket, app, io) => {
+    
     socket.on('join', (data) => {
         console.log('join', data)
         game.players[socket.id].name = data.name;
@@ -12,6 +13,7 @@ module.exports = (game, socket, app, io) => {
     socket.on('leave', () => {
         console.log('leave', socket.id)
         delete game.players[socket.id];
+        game.teams.splice(game.indexOf(socket.id), 1)
         io.emit('updatePlayers', game.players);
     })
 }

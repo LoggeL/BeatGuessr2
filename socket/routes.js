@@ -4,7 +4,7 @@ module.exports = (game, io, app) => {
         game.players[socket.id] = {
             id: socket.id,
             name: undefined,
-            socket: socket,
+            socket: socket.id,
             score: 0,
             team: undefined,
         }

@@ -5,6 +5,10 @@ module.exports = (game, socket, app, io) => {
         io.emit('buzzer', data);
         game.playing = false
         game.song.buzzer = data.buzzer
+        io.emit('buzzer', data)
+    })
+
+    socket.on('guess', data => {
         io.emit('guess', data)
     })
 
@@ -13,7 +17,7 @@ module.exports = (game, socket, app, io) => {
         // game.players[socket.id] = {
         //     id: socket.id,
         //     name: undefined,
-        //     socket: socket,
+        //     socket: socket.id,
         //     score: 0,
         //     team: undefined,
         // }
@@ -36,5 +40,16 @@ module.exports = (game, socket, app, io) => {
         
         io.emit('updateScores', game.teams)
         io.emit('judge', data)
+    })
+
+    socket.on('reset', () => {
+        console.log('reset')
+        for (team in game.teams) {
+            game.teams[team].score = 0
+            game.teams[team].players = []
+        }
+        game.players = {}
+        game.started = false
+        io.emit('reset')
     })
 }
