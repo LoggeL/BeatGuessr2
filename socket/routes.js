@@ -12,6 +12,7 @@ module.exports = (game, io, app) => {
         require('./ping.js')(game, socket, app, io);
         require('./player.js')(game, socket, app, io);
         require('./game.js')(game, socket, app, io);
+        require('./song.js')(game, socket, app, io);
 
         socket.on('disconnect', () => {
             console.log(socket.id, 'disconnected');

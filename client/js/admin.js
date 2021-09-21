@@ -1,10 +1,13 @@
 const socket = io()
 
+const buzzerSound = new Audio('assets/buzzer.mp3');
+
 const audioPlayer = document.getElementById('audioPlayer')
 const table = document.getElementById('table')
 
 const startGame = document.getElementById('startGame')
 const resetGame = document.getElementById('resetGame')
+const skipSong = document.getElementById('skipSong')
 
 const artistGuess = document.getElementById('artistGuess')
 const titleGuess = document.getElementById('titleGuess')
@@ -20,10 +23,12 @@ socket.on('connect', () => {
     console.log('connected', socket.id)
 })
 
-startGame.addEventListener('click', () => {
-    socket.emit('play')
+socket.on('song', data => {
+    console.log('play', data)
+    audioPlayer.src = data.url
+    artistTruth.innerHTML = data.artist
+    titleTruth.innerHTML = data.title
     setTimeout(() => {
-        audioPlayer.src = "someURL" // ToDo: change this to the audio file
         audioPlayer.play()
     }, 1000)
 })
@@ -83,8 +88,22 @@ function checkResponse() {
     }
 }
 
+socket.on('buzzer', () => {
+    buzzerSound.play();
+})
+
+skipSong.addEventListener('click', () => {
+    socket.emit('skip')
+})
+
 resetGame.addEventListener('click', () => {
     socket.emit('reset')
+})
+
+startGame.addEventListener('click', () => {
+    socket.emit('play')
+    audioPlayer.style.display = 'block'
+    startGame.disabled = true
 })
 
 socket.on('disconnect', () => {
