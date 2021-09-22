@@ -6,6 +6,8 @@ module.exports = (game, app, io) => {
         res.redirect('/landing.html');
     });
 
+    require('./cover.js')(game, app, io);
+
     // app.get('/cors/', (req, res, next) => {
     //     const url = req.query.url;
     //     // stream the response to the client

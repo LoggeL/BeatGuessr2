@@ -36,6 +36,7 @@ socket.on('connect', () => {
 
     if (!name || !team) window.location.href = '/'
 
+    console.log('join', name, team)
     socket.emit('join', {
         name, team
     })
@@ -156,7 +157,7 @@ socket.on('connect', () => {
             socket.emit('buzzer', {
                 name: playerName.innerText,
                 team: playerTeam.innerText.replace('team ', ''),
-                buzzed: socket.id
+                // buzzed: socket.id
             })
         }
         else {

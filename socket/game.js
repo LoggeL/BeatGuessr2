@@ -4,7 +4,8 @@ module.exports = (game, socket, app, io) => {
         console.log('buzzer', data);
         io.emit('buzzer', data);
         game.playing = false
-        game.song.buzzer = data.buzzer
+        game.song.buzzer = socket.id
+        data.buzzed = socket.id
         io.emit('buzzer', data)
     })
 
@@ -21,9 +22,11 @@ module.exports = (game, socket, app, io) => {
         //     score: 0,
         //     team: undefined,
         // }
-        const player = game.players[socket.id]
 
+        const buzzerID = game.song.buzzer
+        const player = game.players[buzzerID]
         const team = game.teams[player.team]
+
         if (data.artist && !game.song.artistGuessed) {
             game.song.artistGuessed = true
             game.song.artist = data.artist
@@ -40,6 +43,19 @@ module.exports = (game, socket, app, io) => {
         
         io.emit('updateScores', game.teams)
         io.emit('judge', data)
+
+        if (data.title && data.artist) {
+            game.song.playing = false
+            io.emit('reveal', data)
+        }
+    })
+
+    socket.on('skip', () => {
+        game.song.playing = false
+        io.emit('reveal', {
+            title: game.song.title,
+            artist: game.song.artist
+        })
     })
 
     socket.on('reset', () => {

@@ -16,14 +16,15 @@ module.exports = (game, socket, app, io) => {
   socket.on('play', () => {
     console.log('play')
     // get random song
-    console.log(songs[category])
     shuffleArray(songs[category])
     const url = songs[category].shift()
     game.song.url = url
 
     jsmediatags.read(url, {
       onSuccess: function (tag) {
-        game.song.tag = tag
+        game.song.tag = tag.tags
+        game.song.title = tag.tags.title
+        game.song.artist = tag.tags.artist
         console.log({
           url: url,
           title: tag.tags.title,

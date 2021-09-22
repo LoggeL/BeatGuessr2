@@ -6,6 +6,8 @@ module.exports = (game, socket, app, io) => {
         game.players[socket.id].team = data.team;
         game.players[socket.id].socket = socket.id;
 
+        console.log(game.players)
+
         game.teams[data.team].players.push(socket.id);
         io.emit('updatePlayers', game.players);
     })

@@ -79,17 +79,25 @@ artistWrong.addEventListener('click', () => {
 })
 
 function checkResponse() {
-    if (response.artist === null && response.title === null) {
+    if (response.artist !== null && response.title !== null) {
         socket.emit('judge', response)
         response = {
             artist: null,
             title: null
         }
+        table.style.display = 'none'
     }
 }
 
 socket.on('buzzer', () => {
     buzzerSound.play();
+    audioPlayer.pause();
+})
+
+socket.on('reveal', () => {
+    setTimeout(() => {
+        socket.emit('play')
+    }, 1000)
 })
 
 skipSong.addEventListener('click', () => {

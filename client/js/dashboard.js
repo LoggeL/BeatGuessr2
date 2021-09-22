@@ -2,6 +2,8 @@ const socket = io()
 
 const scoreTable = document.getElementById('scoreTable');
 const playerLists = document.querySelectorAll('ul');
+const lastSong = document.getElementById('lastSong');
+const lastSongCover = document.getElementById('lastSongCover');
 
 const medals = ["🥇", "🥈", "🥉"]
 
@@ -49,8 +51,16 @@ socket.on('connect', () => {
 
         scoreTable.appendChild(tr)
     }
-})
+  })
 
+
+  socket.on('reveal', data => {
+    console.log('reveal', data)
+    fetch('/cover').then(r => r.blob().then(blob => {
+      lastSongCover.src = URL.createObjectURL(blob);
+    }))
+    lastSong.innerText = data.title + ' - ' + data.artist
+  })
 })
 
 
