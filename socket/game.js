@@ -2,6 +2,7 @@ module.exports = (game, socket, app, io) => {
     socket.on('buzzer', (data) => {
         // if (game.started && game.song.playing) {
         console.log('buzzer', data);
+        if (game.song.buzzer) return
         io.emit('buzzer', data);
         game.playing = false
         game.song.buzzer = socket.id
@@ -15,47 +16,40 @@ module.exports = (game, socket, app, io) => {
 
     socket.on('judge', (data) => {
         console.log('judge', data);
-        // game.players[socket.id] = {
-        //     id: socket.id,
-        //     name: undefined,
-        //     socket: socket.id,
-        //     score: 0,
-        //     team: undefined,
-        // }
+
+        // ToDo Validate Socket with buzzer
 
         const buzzerID = game.song.buzzer
         const player = game.players[buzzerID]
         const team = game.teams[player.team]
 
+        game.song.guesses.push(player.team)
+
+        game.song.buzzer = null
+
         if (data.artist && !game.song.artistGuessed) {
             game.song.artistGuessed = true
             game.song.artist = data.artist
-            team.score++
-            player.score++
+            game.teams[player.team].score = game.teams[player.team].score + 1
+            game.players[buzzerID].score = game.players[buzzerID].score + 1
         }
 
         if (data.title && !game.song.titleGuessed) {
             game.song.titleGuessed = true
             game.song.title = data.title
-            team.score++
-            player.score++
+            game.teams[player.team].score = game.teams[player.team].score + 1
+            game.players[buzzerID].score = game.players[buzzerID].score + 1
         }
         
         io.emit('updateScores', game.teams)
         io.emit('judge', data)
 
-        if (data.title && data.artist) {
+        if (data.title && data.artist || game.song.guesses.length == Object.keys(game.teams).length) {
             game.song.playing = false
             io.emit('reveal', data)
+        } else {
+            io.emit('resume', game.song.guesses)
         }
-    })
-
-    socket.on('skip', () => {
-        game.song.playing = false
-        io.emit('reveal', {
-            title: game.song.title,
-            artist: game.song.artist
-        })
     })
 
     socket.on('reset', () => {

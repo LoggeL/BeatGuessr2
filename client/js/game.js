@@ -21,24 +21,31 @@ let game = {
     pingInterval: null,
 }
 
+const name = localStorage.getItem('playerName')
+const team = localStorage.getItem('playerTeam')
+
+if (!name || !team) window.location.href = '/'
+
+let connected = false
+let buzzerID
+
 socket.on('connect', () => {
-    console.log('connected', socket.id)
+    
     game.pingInterval = setInterval(() => {
         socket.emit('ping', Date.now())
     }, 1000)
 
-    socket.on('pong', timestamp => {
-        ping.innerText = `${Math.round((Date.now() - timestamp) * .5)} ms`
-    })
-
-    const name = localStorage.getItem('playerName')
-    const team = localStorage.getItem('playerTeam')
-
-    if (!name || !team) window.location.href = '/'
-
     console.log('join', name, team)
     socket.emit('join', {
         name, team
+    })
+
+    console.log('connected', socket.id)
+    if (connected) return
+    connected = true
+
+    socket.on('pong', timestamp => {
+        ping.innerText = `${Math.round((Date.now() - timestamp) * .5)} ms`
     })
 
     playerName.innerText = name
@@ -77,13 +84,16 @@ socket.on('connect', () => {
         guessArtist.disabled = true
         guessArtist.removeAttribute('correct')
         guessTitle.removeAttribute('correct')
+        game.timer.start = Date.now() - game.timer.duration * 1000
+        window.cancelAnimationFrame(game.timer.animationFrame)
     })
 
-    socket.on('resume', () => {
+    socket.on('resume', teams => {
+        console.log('resume', teams)
         gameStatus.innerText = 'Spielt...'
-        buzzer.disabled = false
-        if (!guessArtist.hasAttribute('correct')) guessArtist.disabled = false
-        if (!guessTitle.hasAttribute('correct')) guessTitle.disabled = false
+        game.timer.start = Date.now() - game.timer.duration * 1000
+        window.cancelAnimationFrame(game.timer.animationFrame)
+        if (!teams.includes(team)) buzzer.disabled = false
     })
 
     socket.on('pause', () => {
@@ -97,14 +107,16 @@ socket.on('connect', () => {
             window.cancelAnimationFrame(game.timer.animationFrame)
             buzzer.innerText = 'Buzzer'
             progress.style.display = 'none'
-            gameStatus.innerText = 'Auswertung...'
+            if (gameStatus.innerText !== "Spielt...") gameStatus.innerText = 'Auswertung...'
             guessTitle.disabled = true
             guessArtist.disabled = true
+            if (buzzerID == socket.id) {
             buzzer.disabled = true
-            socket.emit('guess', {
-                title: guessTitle.value,
-                artist: guessArtist.value
-            })
+                socket.emit('guess', {
+                    title: guessTitle.value,
+                    artist: guessArtist.value
+                })
+            }
             return
         }
         requestAnimationFrame(updateTimers)
@@ -115,7 +127,13 @@ socket.on('connect', () => {
         game.timer.start = Date.now()
         game.timer.animationFrame = requestAnimationFrame(updateTimers)
 
+        guessArtist.value = ''
+        guessTitle.value = ''   
+
         gameStatus.innerText = 'Buzzed: ' + data.name + ', Team ' + data.team
+        
+        buzzerID = data.buzzed
+        
         if (data.buzzed == socket.id) {
             if (!guessArtist.hasAttribute('correct')) guessArtist.disabled = false
             if (!guessTitle.hasAttribute('correct')) guessTitle.disabled = false
@@ -125,13 +143,15 @@ socket.on('connect', () => {
         }
     })
 
-    // socket.on('guess', (data) => {
-    //     console.log('guess', data)
-    //     buzzer.innerText = 'Buzzer'
-    //     progress.style.display = 'none'
-    //     gameStatus.innerText = 'Auswertung...'
-    //     buzzer.disabled = true
-    // })
+    socket.on('guess', (data) => {
+        console.log('guess', data)
+        buzzer.innerText = 'Buzzer'
+        progress.style.display = 'none'
+        gameStatus.innerText = 'Auswertung...'
+        buzzer.disabled = true
+        game.timer.start = Date.now() - game.timer.duration * 1000
+        window.cancelAnimationFrame(game.timer.animationFrame)
+    })
 
     socket.on('judge', (data) => {
         if (data.artist) {
@@ -156,7 +176,7 @@ socket.on('connect', () => {
         if (buzzer.innerText == 'Buzzer') {
             socket.emit('buzzer', {
                 name: playerName.innerText,
-                team: playerTeam.innerText.replace('team ', ''),
+                team: playerTeam.innerText.replace('Team ', ''),
                 // buzzed: socket.id
             })
         }

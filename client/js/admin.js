@@ -80,6 +80,7 @@ artistWrong.addEventListener('click', () => {
 
 function checkResponse() {
     if (response.artist !== null && response.title !== null) {
+        console.log('judge')
         socket.emit('judge', response)
         response = {
             artist: null,
@@ -100,12 +101,20 @@ socket.on('reveal', () => {
     }, 1000)
 })
 
+socket.on('resume', () => {
+    audioPlayer.play();
+    gameStatus.innerText = 'Spielt...'
+})
+
 skipSong.addEventListener('click', () => {
     socket.emit('skip')
 })
 
 resetGame.addEventListener('click', () => {
     socket.emit('reset')
+    setTimeout(() => {
+        window.location.reload()
+    }, 1000)
 })
 
 startGame.addEventListener('click', () => {

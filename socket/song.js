@@ -3,7 +3,7 @@ const jsmediatags = require("jsmediatags");
 
 const songs = require('../discord/songs.json')
 
-const category = 'jpfy'
+const category = 'caro-mix'
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -25,6 +25,8 @@ module.exports = (game, socket, app, io) => {
         game.song.tag = tag.tags
         game.song.title = tag.tags.title
         game.song.artist = tag.tags.artist
+        game.song.playing = true
+        game.song.guesses = []
         console.log({
           url: url,
           title: tag.tags.title,
@@ -42,6 +44,14 @@ module.exports = (game, socket, app, io) => {
       }
     });
   })
+
+  socket.on('skip', () => {
+    console.log('skip')
+    io.emit('reveal', {
+        title: game.song.title,
+        artist: game.song.artist
+    })
+})
   
     socket.on('reveal', data => {
       socket.emit('reveal', data)
