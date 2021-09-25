@@ -29,7 +29,7 @@ let game = {
     },
     started: false,
     song: {
-        category: null,
+        category: 'jpfy',
         url: null,
         artist: null,
         artistGuessed: null,

@@ -14,6 +14,9 @@ module.exports = (game, io, app) => {
         require('./game.js')(game, socket, app, io);
         require('./song.js')(game, socket, app, io);
 
+        io.emit('updateScores', game.teams)
+        io.emit('updatePlayers', game.players)
+
         socket.on('disconnect', () => {
             console.log(socket.id, 'disconnected');
             game.players[socket.id] = null;

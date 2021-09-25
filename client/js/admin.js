@@ -24,6 +24,7 @@ socket.on('connect', () => {
 })
 
 socket.on('song', data => {
+    skipSong.disabled = false
     console.log('play', data)
     audioPlayer.src = data.url
     artistTruth.innerHTML = data.artist
@@ -34,6 +35,7 @@ socket.on('song', data => {
 })
 
 socket.on('guess', data => {
+    console.log('guess', data)
     table.style.display = 'block'
 
     artistGuess.innerHTML = data.artist
@@ -43,6 +45,9 @@ socket.on('guess', data => {
     artistCorrect.disabled = false
     titleWrong.disabled = false
     artistWrong.disabled = false
+
+    if (data.titleGuessed) titleCorrect.click()
+    if (data.artistGuessed) artistCorrect.click()
 })
 
 let response = {
@@ -87,6 +92,7 @@ function checkResponse() {
             title: null
         }
         table.style.display = 'none'
+        audioPlayer.play()
     }
 }
 
@@ -96,9 +102,10 @@ socket.on('buzzer', () => {
 })
 
 socket.on('reveal', () => {
+    audioPlayer.play()
     setTimeout(() => {
         socket.emit('play')
-    }, 1000)
+    }, 5000)
 })
 
 socket.on('resume', () => {
@@ -108,6 +115,7 @@ socket.on('resume', () => {
 
 skipSong.addEventListener('click', () => {
     socket.emit('skip')
+    skipSong.disabled = true
 })
 
 resetGame.addEventListener('click', () => {

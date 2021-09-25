@@ -28,9 +28,10 @@ if (!name || !team) window.location.href = '/'
 
 let connected = false
 let buzzerID
+let correctArtist, correctTitle
 
 socket.on('connect', () => {
-    
+
     game.pingInterval = setInterval(() => {
         socket.emit('ping', Date.now())
     }, 1000)
@@ -50,6 +51,18 @@ socket.on('connect', () => {
 
     playerName.innerText = name
     playerTeam.innerText = 'Team ' + team
+
+    socket.on('hint', data => {
+        console.log('hint', data)
+        if (data.artistGuessed && data.artist != true) {
+            correctArtist = data.artist
+            guessArtist.value = data.artist
+        }
+        if (data.titleGuessed && data.title != true) {
+            correctTitle = data.title
+            guessTitle.value = data.title
+        }
+    })
 
     socket.on('updateScores', score => {
         const teams = Object.values(score).sort((a, b) => {
@@ -84,6 +97,8 @@ socket.on('connect', () => {
         guessArtist.disabled = true
         guessArtist.removeAttribute('correct')
         guessTitle.removeAttribute('correct')
+        guessArtist.value = ''
+        guessTitle.value = ''
         game.timer.start = Date.now() - game.timer.duration * 1000
         window.cancelAnimationFrame(game.timer.animationFrame)
     })
@@ -111,7 +126,7 @@ socket.on('connect', () => {
             guessTitle.disabled = true
             guessArtist.disabled = true
             if (buzzerID == socket.id) {
-            buzzer.disabled = true
+                buzzer.disabled = true
                 socket.emit('guess', {
                     title: guessTitle.value,
                     artist: guessArtist.value
@@ -123,17 +138,19 @@ socket.on('connect', () => {
     }
 
     socket.on('buzzer', (data) => {
+        console.log('buzzer', data)
+
         progress.style.display = 'block'
         game.timer.start = Date.now()
         game.timer.animationFrame = requestAnimationFrame(updateTimers)
 
-        guessArtist.value = ''
-        guessTitle.value = ''   
+        guessArtist.value = guessArtist.hasAttribute('correct') ? correctArtist : ''
+        guessTitle.value = guessTitle.hasAttribute('correct') ? correctTitle : ''
 
         gameStatus.innerText = 'Buzzed: ' + data.name + ', Team ' + data.team
-        
+
         buzzerID = data.buzzed
-        
+
         if (data.buzzed == socket.id) {
             if (!guessArtist.hasAttribute('correct')) guessArtist.disabled = false
             if (!guessTitle.hasAttribute('correct')) guessTitle.disabled = false
